@@ -13,7 +13,7 @@ from DataStructures.Map import map_separate_chaining as sc
 from datetime import datetime as dt
 
 csv.field_size_limit(2147483647)
-data_dir = os.path.dirname(os.path.realpath('_file')) + '/Data/Crime_in_LA/Crime_in_LA'
+
 
 def new_logic():
     """
