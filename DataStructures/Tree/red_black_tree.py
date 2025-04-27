@@ -50,10 +50,6 @@ def insert_node(root, key, value):
     if root is None:
         return {"key": key, "value": value, "color": "RED", "left": None, "right": None}
 
-    if type(key) is str:
-        key = int(key)  
-    if type(root["key"]) is str:
-        root["key"] = int(root["key"])  
 
     if key < root["key"]:
         root["left"] = insert_node(root["left"], key, value)
@@ -79,10 +75,6 @@ def get_node(root, key):
         return None
     if root["key"] is None:
         return None
-    if type(root["key"]) is str:
-        root["key"] = int(root["key"])
-    if type(key) is str:
-        key = int(key)
     if key < root["key"]:
         return get_node(root["left"], key)
     elif key > root["key"]:
