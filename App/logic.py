@@ -189,12 +189,64 @@ def sort_crit_1(record_1, record_2):
             return False
 
 
-def req_2(catalog):
+def req_2(catalog, fecha_i, fecha_f):
     """
     Retorna el resultado del requerimiento 2
     """
     # TODO: Modificar el requerimiento 2
-    pass
+    start_time = get_time()
+
+    fecha_1 = dt.strptime(fecha_i, "%m/%d/%Y")
+    fecha_2 = dt.strptime(fecha_f, "%m/%d/%Y")
+
+    fechas = lp.get(catalog, "fecha_occ")
+
+    lista_valores = rbt.values(fechas, fecha_1, fecha_2)
+    lista = ar.new_list()
+    
+    for list in lista_valores["elements"]:
+        for hash in list["elements"]:
+            status = sc.get(hash, "Status")
+            if status != "IC":
+                ar.add_last(lista, hash)
+    if lista["size"] == 0:
+        return None
+    else:
+        lista_no_ordenada = ar.new_list()
+        for index in range(lista["size"]):
+            dato = ar.get_element(lista, index)
+            hash_un_dato = sc.new_map(3, 4, 109345121)
+            sc.put(hash_un_dato, "fecha", sc.get(dato, "DATE OCC"))
+            sc.put(hash_un_dato, "area", sc.get(dato, "AREA"))
+            sc.put(hash_un_dato, "index", index)
+            ar.add_last(lista_no_ordenada, hash_un_dato)
+    
+        lista_sorted = ar.merge_sort(lista_no_ordenada, sort_crit_1)
+        lista_index = ar.new_list()
+        for i in lista_sorted:
+            ar.add_last(lista_index, sc.get(i, "index"))
+        
+        lista_final = ar.new_list()
+        for index in lista_index:
+            lista_un_dato = [sc.get(ar.get_element(lista, index), "DR_NO"),
+                             sc.get(ar.get_element(lista, index), "DATE OCC"),
+                             sc.get(ar.get_element(lista, index), "TIME OCC"),
+                             sc.get(ar.get_element(lista, index), "AREA"),
+                             sc.get(ar.get_element(lista, index), "Rptd Dist No"),
+                             sc.get(ar.get_element(lista, index), "Part 1-2"),
+                             sc.get(ar.get_element(lista, index), "Crm Cd"),
+                             sc.get(ar.get_element(lista, index), "Status")]
+            ar.add_last(lista_final, lista_un_dato)
+        
+        if ar.size(lista_final) > 10:
+            lista_final_2 = ar.new_list()
+            for k in range(-5,5):
+                ar.add_last(lista_final_2, ar.get_element(lista_final, k))
+            lista_final = lista_final_2
+
+    end_time = get_time()
+    time = delta_time(start_time, end_time)    
+    return lista_final, time
 
 
 def req_3(catalog):
