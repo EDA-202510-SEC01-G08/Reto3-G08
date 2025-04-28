@@ -146,27 +146,186 @@ def req_3(catalog):
     pass
 
 
-def req_4(catalog):
+def req_4(catalog, N, edad_i, edad_f):
     """
     Retorna el resultado del requerimiento 4
     """
     # TODO: Modificar el requerimiento 4
-    pass
+    start_time = get_time()
 
+    edad_inicial = int(edad_i)
+    edad_final = int(edad_f)
 
+    edades = lp.get(catalog, "edad")
+
+    lista_valores = rbt.values(edades, edad_inicial, edad_final)
+
+    graves = ar.new_list()
+    menores = ar.new_list()
+
+    for list in lista_valores["elements"]:
+        for hash in list["elements"]:
+            gravedad = sc.get(hash, "Part 1-2")
+            if gravedad == "Part 1":
+                ar.add_last(graves, hash)
+            elif gravedad == "Part 2":
+                ar.add_last(menores, hash)
+
+    if graves["size"] == 0 or menores["size"] == 0:
+        return None
+    
+    graves_ordenados = ar.merge_sort(graves, sort_crit_4)
+    menores_ordenados = ar.merge_sort(menores, sort_crit_4)
+
+    crimenes_ordenados = graves_ordenados["elements"] + menores_ordenados["elements"]
+
+    respuesta = ar.new_list()
+
+    for crimen in crimenes_ordenados[:N]:
+        info = {
+            "ID Reporte": sc.get(crimen, "DR_NO"),
+            "Fecha Ocurrencia": sc.get(crimen, "DATE OCC"),
+            "Hora Ocurrencia": sc.get(crimen, "TIME OCC"),
+            "Área": sc.get(crimen, "AREA"),
+            "Subárea": sc.get(crimen, "AREA NAME"),
+            "Gravedad": sc.get(crimen, "Part 1-2"),
+            "Código Crimen": sc.get(crimen, "Crm Cd"),
+            "Edad Víctima": sc.get(crimen, "Vict Age"),
+            "Estado Caso": sc.get(crimen, "Status"),
+            "Dirección": sc.get(crimen, "LOCATION")
+        }
+        ar.add_last(respuesta, info)
+
+    end_time = get_time()
+    time = delta_time(start_time, end_time)
+
+    return ar.size(crimenes_ordenados), respuesta, time
+
+def sort_crit_4(record_1, record_2):
+    edad_1 = int(sc.get(record_1, "Vict Age"))
+    edad_2 = int(sc.get(record_2, "Vict Age"))
+
+    if edad_1 > edad_2:
+        return True
+    elif edad_1 < edad_2:
+        return False
+    else:
+        fecha_a = sc.get(record_1, "DATE OCC")
+        fecha_b = sc.get(record_2, "DATE OCC")
+        
+        # Convertir las fechas para comparar correctamente
+        fecha_1 = dt.strptime(fecha_a, "%m/%d/%Y")
+        fecha_2 = dt.strptime(fecha_b, "%m/%d/%Y")
+
+        if fecha_1 < fecha_2:
+            return True
+        else:
+            return False
+  
 def req_5(catalog):
     """
     Retorna el resultado del requerimiento 5
     """
     # TODO: Modificar el requerimiento 5
+    
     pass
 
-def req_6(catalog):
+
+def req_6(catalog, sexo, mes, N):
     """
     Retorna el resultado del requerimiento 6
     """
     # TODO: Modificar el requerimiento 6
-    pass
+
+    # Crear una lista vacía para almacenar la información de crímenes por área
+    crímenes_por_area = ar.new_list()
+    
+    # Obtener el árbol de crímenes filtrados por sexo
+    crimenes_sexo = rbt.values(catalog, sexo)
+    
+    # Recorrer los crímenes filtrados por sexo
+    for lista in crimenes_sexo["elements"]:
+        for hash in lista["elements"]:
+            area = sc.get(hash, "AREA NAME")
+            fecha_crimen = sc.get(hash, "DATE OCC")
+            
+            # Obtener el mes y el año del crimen
+            mes_crimen, dia_crimen, año_crimen = map(int, fecha_crimen.split("/"))
+            
+            # Verificar si el crimen ocurrió en el mes dado
+            if mes_crimen == mes:
+                # Buscar si el área ya está en la lista
+                area_encontrada = False
+                for i in range(ar.size(crímenes_por_area)):
+                    area_info = ar.get(crímenes_por_area, i)
+                    if area_info["area"] == area:
+                        # Si el área ya existe, actualizamos la cantidad de crímenes y los años
+                        area_info["crímenes"] += 1
+                        if año_crimen not in area_info["años"]:
+                            area_info["años"].append(año_crimen)
+                        area_encontrada = True
+                        
+                # Si el área no fue encontrada, la agregamos a la lista
+                if not area_encontrada:
+                    area_info = {
+                        "area": area,
+                        "nombre_area": sc.get(hash, "AREA NAME"),
+                        "crímenes": 1,
+                        "años": [año_crimen]
+                    }
+                    ar.add_last(crímenes_por_area, area_info)
+
+    # Ordenar las áreas utilizando la función de ordenación
+    areas_ordenadas = ar.merge_sort(crímenes_por_area, sort_crit_6)
+    
+    # Limitar el número de áreas a N
+    areas_ordenadas = areas_ordenadas[:N]
+    
+    # Generar la respuesta utilizando una lista de ar
+    respuesta = ar.new_list()
+    for area_info in areas_ordenadas:
+        # Convertir la lista de años en una lista de tuplas (crímenes, año)
+        años_info = [(area_info["crímenes"], año) for año in area_info["años"]]
+        
+        ar.add_last(respuesta, {
+            "area": area_info["area"],
+            "nombre_area": area_info["nombre_area"],
+            "cantidad_crímenes": area_info["crímenes"],
+            "años": años_info
+        })
+    
+    return respuesta
+
+
+def sort_crit_6(record_1, record_2):
+    # Obtener la cantidad de crímenes de cada área
+    crimenes_1 = record_1["crímenes"]
+    crimenes_2 = record_2["crímenes"]
+    
+    # Primero, comparamos por la cantidad de crímenes (de menor a mayor)
+    if crimenes_1 < crimenes_2:
+        return True
+    elif crimenes_1 > crimenes_2:
+        return False
+    else:
+        # Si los crímenes son iguales, comparamos por la cantidad de años en los que ocurrieron crímenes
+        años_1 = len(record_1["años"])  # El tamaño de la lista de años
+        años_2 = len(record_2["años"])  # El tamaño de la lista de años
+        
+        if años_1 < años_2:
+            return True
+        elif años_1 > años_2:
+            return False
+        else:
+            # Si los años son iguales, comparamos lexicográficamente por el nombre del área
+            nombre_area_1 = record_1["nombre_area"]
+            nombre_area_2 = record_2["nombre_area"]
+            
+            if nombre_area_1 < nombre_area_2:
+                return True
+            else:
+                return False
+
 
 
 def req_7(catalog):
