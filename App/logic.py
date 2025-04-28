@@ -154,12 +154,79 @@ def req_4(catalog):
     pass
 
 
-def req_5(catalog):
+def req_5(catalog, n, start_date, end_date):
     """
-    Retorna el resultado del requerimiento 5
+    Requerimiento 5: Consultar las N áreas con mayor cantidad de crímenes no resueltos
+    ocurridos en un rango de fechas.
     """
-    # TODO: Modificar el requerimiento 5
-    pass
+    # Convert input dates to datetime objects
+    start_date = dt.strptime(start_date, "%Y-%m-%d")
+    end_date = dt.strptime(end_date, "%Y-%m-%d")
+
+    # Get the RBT for "fecha_occ" (date of occurrence)
+    rbt_fecha_occ = lp.get(catalog, "DATE OCC")
+
+    # Filter crimes within the date range
+    crimes_in_range = ar.new_list()
+    for date in rbt.keys(rbt_fecha_occ):
+        if start_date <= date <= end_date:
+            crimes_on_date = rbt.get(rbt_fecha_occ, date)
+            for crime in crimes_on_date:
+                if sc.get(crime, "Status") == "IC":  # "IC" means unresolved
+                    ar.add_last(crimes_in_range, crime)
+
+    # Group crimes by area and count unresolved crimes
+    area_crime_count = {}
+    for crime in crimes_in_range["elements"]:
+        area = sc.get(crime, "AREA")
+        area_name = sc.get(crime, "AREA NAME")
+        if area not in area_crime_count:
+            area_crime_count[area] = {
+                "area_name": area_name,
+                "crime_count": 0,
+                "first_crime_date": None,
+                "last_crime_date": None,
+            }
+        area_crime_count[area]["crime_count"] += 1
+        crime_date = sc.get(crime, "DATE OCC")
+        if (
+            area_crime_count[area]["first_crime_date"] is None
+            or crime_date < area_crime_count[area]["first_crime_date"]
+        ):
+            area_crime_count[area]["first_crime_date"] = crime_date
+        if (
+            area_crime_count[area]["last_crime_date"] is None
+            or crime_date > area_crime_count[area]["last_crime_date"]
+        ):
+            area_crime_count[area]["last_crime_date"] = crime_date
+
+    # Convert the dictionary to a list for sorting
+    area_list = ar.new_list()
+    for area, data in area_crime_count.items():
+        ar.add_last(area_list, {
+            "area": area,
+            "area_name": data["area_name"],
+            "crime_count": data["crime_count"],
+            "first_crime_date": data["first_crime_date"],
+            "last_crime_date": data["last_crime_date"],
+        })
+
+    # Sort the areas using merge_sort and the custom sort criteria
+    sorted_areas = ar.merge_sort(area_list, ar.area_sort_criteria)
+
+    # Get the top N areas
+    top_n_areas = ar.sub_list(sorted_areas, 0, n)
+
+    return top_n_areas
+
+def area_sort_criteria_5(area_1, area_2):
+
+    if area_1["crime_count"] > area_2["crime_count"]:
+        return True  
+    elif area_1["crime_count"] < area_2["crime_count"]:
+        return False  
+    else:
+        return area_1["area_name"] < area_2["area_name"]
 
 def req_6(catalog):
     """
