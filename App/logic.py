@@ -207,7 +207,8 @@ def req_2(catalog, fecha_i, fecha_f):
     for list in lista_valores["elements"]:
         for hash in list["elements"]:
             status = sc.get(hash, "Status")
-            if status != "IC":
+            gravedad = sc.get(hash, "Part 1-2")
+            if status != "IC" and gravedad == "1":
                 ar.add_last(lista, hash)
     if lista["size"] == 0:
         return None
@@ -216,12 +217,12 @@ def req_2(catalog, fecha_i, fecha_f):
         for index in range(lista["size"]):
             dato = ar.get_element(lista, index)
             hash_un_dato = sc.new_map(3, 4, 109345121)
-            sc.put(hash_un_dato, "fecha", sc.get(dato, "DATE OCC"))
-            sc.put(hash_un_dato, "area", sc.get(dato, "AREA"))
+            sc.put(hash_un_dato, "fecha_rptd", sc.get(dato, "Date Rptd"))
+            sc.put(hash_un_dato, "area_name", sc.get(dato, "AREA NAME"))
             sc.put(hash_un_dato, "index", index)
             ar.add_last(lista_no_ordenada, hash_un_dato)
     
-        lista_sorted = ar.merge_sort(lista_no_ordenada, sort_crit_1)
+        lista_sorted = ar.merge_sort(lista_no_ordenada, sort_crit_2)
         lista_index = ar.new_list()
         for i in lista_sorted:
             ar.add_last(lista_index, sc.get(i, "index"))
@@ -248,14 +249,76 @@ def req_2(catalog, fecha_i, fecha_f):
     time = delta_time(start_time, end_time)    
     return lista_final, time
 
+def sort_crit_2(record_1, record_2):
+    fecha_a = sc.get(record_1, "fecha_rptd")
+    fecha_b = sc.get(record_2, "fecha_rptd")
 
-def req_3(catalog):
+    fecha_1 = dt.strptime(fecha_a, "%m/%d/%Y %H:%M:%s")
+    fecha_2 = dt.strptime(fecha_b, "%m/%d/%Y %H:%M:%s")
+
+    if fecha_1 > fecha_2:
+        return True
+    elif fecha_1 <= fecha_2:
+        area_1 = sc.get(record_1, "area_name")
+        area_2 = sc.get(record_2, "area_name")
+        if area_1 > area_2:
+            return True
+        else:
+            return False
+
+def req_3(catalog, N, area_name):
     """
     Retorna el resultado del requerimiento 3
     """
     # TODO: Modificar el requerimiento 3
-    pass
+    start_time = get_time()
 
+    rbt_area = lp.get(catalog, "area_name")
+    crimes_in_area = rbt.get(rbt_area, area_name)
+    total_crimes = ar.size(crimes_in_area)
+    if total_crimes == 0:
+        return None
+    else:
+        lista_datos = ar.new_list()
+        for i in range(ar.size(crimes_in_area)):
+            dato = ar.get_element(crimes_in_area, i)
+            map_un_dato = sc.new_map(2,4,109345121)
+            sc.put(map_un_dato, "fecha", sc.get(dato, "Date Rptd"))
+            sc.put(map_un_dato, "index", i)
+            ar.add_last(lista_datos, map_un_dato)
+        lista_datos_sorted = ar.merge_sort(lista_datos, sort_crit_3)
+
+        lista_indices = ar.new_list()
+        for i in lista_datos_sorted:
+            ar.add_last(lista_indices, sc.get(i, "index"))
+    
+        lista_completa = ar.new_list()
+        for index in lista_indices["elements"]:
+            lista_un_dato = [sc.get(ar.get_element(crimes_in_area, index), "DR_NO"),
+                             sc.get(ar.get_element(crimes_in_area, index), "DATE OCC"),
+                             sc.get(ar.get_element(crimes_in_area, index), "TIME OCC"),
+                             sc.get(ar.get_element(crimes_in_area, index), "AREA"),
+                             sc.get(ar.get_element(crimes_in_area, index), "Rptd Dist No"),
+                             sc.get(ar.get_element(crimes_in_area, index), "Part 1-2"),
+                             sc.get(ar.get_element(crimes_in_area, index), "Crm Cd"),
+                             sc.get(ar.get_element(crimes_in_area, index), "Status"),
+                             sc.get(ar.get_element(crimes_in_area, index), "LOCATION")]
+            ar.add_last(lista_completa, lista_un_dato)
+        lista_final = ar.sub_list(lista_completa, 0, N)
+    end_time = get_time()
+    time = delta_time(start_time, end_time)
+    return lista_final, time, total_crimes
+    
+def sort_crit_3(record_1, record_2):
+    fecha_a = sc.get(record_1, "fecha")
+    fecha_b = sc.get(record_2, "fecha")
+
+    fecha_1 = dt.strptime(fecha_a, "%m/%d/%Y %H:%M:%s")
+    fecha_2 = dt.strptime(fecha_b, "%m/%d/%Y %H:%M:%s")
+    if fecha_1 > fecha_2:
+        return True
+    else:
+        return False
 
 def req_4(catalog):
     """
