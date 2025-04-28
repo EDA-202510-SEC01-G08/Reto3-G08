@@ -351,4 +351,4 @@ def balance(node):
             node = rotate_right(node)
         if is_red(node["left"]) and is_red(node["right"]):
             flip_colors(node)
-    return node                                     
+    return node

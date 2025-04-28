@@ -133,13 +133,14 @@ def req_1(catalog, fecha_i, fecha_f):
     fecha_2 = dt.strptime(fecha_f, "%m/%d/%Y")
 
     fechas = lp.get(catalog, "fecha_occ")
-
     lista_valores = rbt.values(fechas, fecha_1, fecha_2)
     lista = ar.new_list()
-    
+    print(lista_valores)
+    "a"
     for list in lista_valores["elements"]:
         for hash in list["elements"]:
             ar.add_last(lista, hash)
+            
     if lista["size"] == 0:
         return None
     else:
@@ -151,14 +152,15 @@ def req_1(catalog, fecha_i, fecha_f):
             sc.put(hash_un_dato, "area", sc.get(dato, "AREA"))
             sc.put(hash_un_dato, "index", index)
             ar.add_last(lista_no_ordenada, hash_un_dato)
-    
+        
         lista_sorted = ar.merge_sort(lista_no_ordenada, sort_crit_1)
         lista_index = ar.new_list()
-        for i in lista_sorted:
+        for i in lista_sorted["elements"]:
             ar.add_last(lista_index, sc.get(i, "index"))
         
+        
         lista_final = ar.new_list()
-        for index in lista_index:
+        for index in lista_index["elements"]:
             lista_un_dato = [sc.get(ar.get_element(lista, index), "DR_NO"),
                              sc.get(ar.get_element(lista, index), "DATE OCC"),
                              sc.get(ar.get_element(lista, index), "TIME OCC"),
@@ -166,6 +168,7 @@ def req_1(catalog, fecha_i, fecha_f):
                              sc.get(ar.get_element(lista, index), "Crm Cd"),
                              sc.get(ar.get_element(lista, index), "LOCATION")]
             ar.add_last(lista_final, lista_un_dato)
+            
     end_time = get_time()
     time = delta_time(start_time, end_time)    
 
@@ -224,11 +227,11 @@ def req_2(catalog, fecha_i, fecha_f):
     
         lista_sorted = ar.merge_sort(lista_no_ordenada, sort_crit_2)
         lista_index = ar.new_list()
-        for i in lista_sorted:
+        for i in lista_sorted["elements"]:
             ar.add_last(lista_index, sc.get(i, "index"))
         
         lista_final = ar.new_list()
-        for index in lista_index:
+        for index in lista_index["elements"]:
             lista_un_dato = [sc.get(ar.get_element(lista, index), "DR_NO"),
                              sc.get(ar.get_element(lista, index), "DATE OCC"),
                              sc.get(ar.get_element(lista, index), "TIME OCC"),
@@ -289,7 +292,7 @@ def req_3(catalog, N, area_name):
         lista_datos_sorted = ar.merge_sort(lista_datos, sort_crit_3)
 
         lista_indices = ar.new_list()
-        for i in lista_datos_sorted:
+        for i in lista_datos_sorted["elements"]:
             ar.add_last(lista_indices, sc.get(i, "index"))
     
         lista_completa = ar.new_list()
@@ -313,9 +316,7 @@ def sort_crit_3(record_1, record_2):
     fecha_a = sc.get(record_1, "fecha")
     fecha_b = sc.get(record_2, "fecha")
 
-    fecha_1 = dt.strptime(fecha_a, "%m/%d/%Y %H:%M:%s")
-    fecha_2 = dt.strptime(fecha_b, "%m/%d/%Y %H:%M:%s")
-    if fecha_1 > fecha_2:
+    if fecha_a > fecha_b:
         return True
     else:
         return False

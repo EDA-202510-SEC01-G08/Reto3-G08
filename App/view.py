@@ -1,6 +1,6 @@
 import sys
 from App import logic as lg
-import tabulate as tb
+#import tabulate as tb
 import csv  
 
 def new_logic():
@@ -26,14 +26,17 @@ def load_data(control):
 
     data = lg.load_data(control, file_path)
     headers_generales = ["Tiempo de carga", "N° de registros"]
-    print(tb.tabulate([data[0]["elements"]], headers_generales, tablefmt="pretty"))    
+    print(data[0])
+    #print(tb.tabulate([data[0]["elements"]], headers_generales, tablefmt="pretty"))    
     print(f"\nLos primeros 5 registros son:\n")
     primeros = data[1]["elements"]
+    print(primeros)
     headers = ["DR_NO", "Date Rptd", "DATE OCC", "AREA NAME", "Crm Cd"]  
-    print(tb.tabulate(primeros, headers, tablefmt="pretty"))
+    #print(tb.tabulate(primeros, headers, tablefmt="pretty"))
     print(f"\nLos últimos 5 registros son:\n")
-    primeros = data[2]["elements"]  
-    print(tb.tabulate(primeros, headers, tablefmt="pretty"))
+    primeros = data[2]["elements"] 
+    print(primeros) 
+    #print(tb.tabulate(primeros, headers, tablefmt="pretty"))
 
 
 def print_data(control, id):
@@ -48,7 +51,15 @@ def print_req_1(control):
         Función que imprime la solución del Requerimiento 1 en consola
     """
     # TODO: Imprimir el resultado del requerimiento 1
-    pass
+
+    fecha_i = input("Ingrese la fecha inical del rango en formato mm/dd/yyyy: ")
+    fecha_f = input("Ingrese la fecha final del rango en formato mm/dd/yyyy: ")
+    result = lg.req_1(control, fecha_i, fecha_f)
+    if result == None:
+        print("No se encontraron crimenes en ese rango de fechas")
+    else:
+        print(result[0])
+        headers = ["Identificador del reporte", "Fecha", "Hora", "Nombre del Area", "Codigo del crimen", "Direccion"]
 
 
 def print_req_2(control):
@@ -64,7 +75,15 @@ def print_req_3(control):
         Función que imprime la solución del Requerimiento 3 en consola
     """
     # TODO: Imprimir el resultado del requerimiento 3
-    pass
+    n = int(input("Ingrese el número de datos que deseas analizar: "))
+    area_name = input("Ingrese el área por la cual quiere filtrar: ")
+    result = lg.req_3(control, n, area_name)
+    if result == None:
+        print("No se encontraron crimenes en el área buscada: ")
+    else:
+        print(result[0])
+        print(result[2])
+        print(result[1])
 
 
 def print_req_4(control):
