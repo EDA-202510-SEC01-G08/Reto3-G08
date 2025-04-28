@@ -1,6 +1,7 @@
 from DataStructures.Tree import rbt_node as rb
 from DataStructures.List import single_linked_list as sl
 from DataStructures.List import array_list as al
+from DataStructures.Stack import stack as st
 from datetime import datetime
 
 def new_map():
@@ -38,28 +39,33 @@ def flip_colors(node_rbt):
     return node_rbt
 
 def put(my_rbt, key, value):
-    if my_rbt["root"] is None:
-        my_rbt["root"] = {"key": key, "value": value, "color": "RED", "left": None, "right": None}
-        rb.change_color(my_rbt["root"], "BLACK")  # La raíz siempre debe ser negra
-    else:
-        my_rbt["root"] = insert_node(my_rbt["root"], key, value)
-    rb.change_color(my_rbt["root"], "BLACK")
+    my_rbt['root'] = insert_node(my_rbt["root"], key, value)
+    my_rbt['root']["color"] = rb.BLACK
     return my_rbt
 
 def insert_node(root, key, value):
-    if root is None:
-        return {"key": key, "value": value, "color": "RED", "left": None, "right": None}
-
-
-    if key < root["key"]:
+    if root == None:
+        return rb.new_node(key, value)
+    elif root["key"] > key:
         root["left"] = insert_node(root["left"], key, value)
-    elif key > root["key"]:
+        if root["left"]["left"] and root["left"]["color"] == rb.RED and root["left"]["left"]["color"] == rb.RED:
+            root = rotate_right(root)
+            flip_colors(root)
+    elif root["key"] < key:
         root["right"] = insert_node(root["right"], key, value)
-    else:
+        if (root["left"] and root["left"]["color"] == rb.RED) and (root["right"] and root["right"]["color"] == rb.RED):
+            flip_colors(root)
+        elif (root["left"] is None and root["right"]["color"] == rb.RED) or (root["left"] and root["left"]["color"] == rb.BLACK and root["right"]["color"] == rb.RED):
+            root = rotate_left(root)
+    elif root["key"] == key:
         root["value"] = value
-
-    root = balance(root)
-
+    
+    root["size"] = 1
+    if root["left"] is not None:
+        root["size"] += root["left"]["size"]
+    if root["right"] is not None:
+        root["size"] += root["right"]["size"]
+    
     return root
 
 def get(my_rbt, key):
@@ -288,32 +294,34 @@ def height_tree(root):
         return 1 + max(left_height, right_height)
     
 def keys(my_rbt, key_initial, key_final):
-    list = al.new_list()
-    if is_empty(my_rbt):
-        return None
-    else:
-        keys = keys_range(my_rbt["root"], key_initial, key_final, list)
-        return keys
-    
-def keys_range(root, key_initial, key_final, list):
+    list_key = sl.new_list()
+    keys_range(my_rbt['root'], key_initial, key_final, list_key)
+    return list_key
+
+def keys_range(root, key_initial, key_final, list_key):
     if root is None:
-        return None
-    elif root["key"] >= key_initial and root["key"] <= key_final:
-        al.add_last(list, root["key"])
-    elif root["key"] < key_initial:
-        al.add_last(list, keys_range(root["right"], key_initial, key_final, list))
-    elif root["key"] > key_final:
-        al.add_last(list, keys_range(root["left"], key_initial, key_final, list))
-    return list
-    
+        return
+    if key_initial < root['key']:
+        keys_range(root['left'], key_initial, key_final, list_key)
+    if key_initial <= root['key'] <= key_final:
+        st.push(list_key,(root['key']))
+    if key_final > root['key']:
+        keys_range(root['right'], key_initial, key_final, list_key)
 
 def values(my_rbt, key_initial, key_final):
-     lista_keys = keys(my_rbt, key_initial, key_final)
-     lista_values = al.new_list()
-     for key in lista_keys["elements"]:
-         value = get(my_rbt, key)
-         al.add_last(lista_values, value)
-     return lista_values
+    list_value = sl.new_list()
+    values_range(my_rbt['root'], key_initial, key_final, list_value)
+    return list_value
+
+def values_range(root, key_initial, key_final, list_value):
+    if root is None:
+        return
+    if key_initial < root['key']:
+        values_range(root['left'], key_initial, key_final, list_value)
+    if key_initial <= root['key'] <= key_final:
+        st.push(list_value,(root['value']))
+    if key_final > root['key']:
+        values_range(root['right'], key_initial, key_final, list_value)
 
 def is_red(node):
     if node is None:
