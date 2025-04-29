@@ -294,7 +294,7 @@ def height_tree(root):
         return 1 + max(left_height, right_height)
     
 def keys(my_rbt, key_initial, key_final):
-    list_key = sl.new_list()
+    list_key = al.new_list()
     keys_range(my_rbt['root'], key_initial, key_final, list_key)
     return list_key
 
@@ -309,7 +309,7 @@ def keys_range(root, key_initial, key_final, list_key):
         keys_range(root['right'], key_initial, key_final, list_key)
 
 def values(my_rbt, key_initial, key_final):
-    list_value = sl.new_list()
+    list_value = al.new_list()
     values_range(my_rbt['root'], key_initial, key_final, list_value)
     return list_value
 
