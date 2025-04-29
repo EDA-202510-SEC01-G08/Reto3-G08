@@ -131,16 +131,16 @@ def key_set_tree(root, list):
 
 def value_set(my_rbt):
     if is_empty(my_rbt):
-        return sl.new_list()
+        return al.new_list()
     else:
-        list = sl.new_list()
+        list = al.new_list()
         return value_set_tree(my_rbt["root"], list)
 
 def value_set_tree(root, list):
     if root is None:
-        return sl.new_list()
+        return al.new_list()
     value_set_tree(root["left"], list)
-    sl.add_last(list, rb.get_value(root))
+    al.add_last(list, rb.get_value(root))
     value_set_tree(root["right"], list)
     return list
 

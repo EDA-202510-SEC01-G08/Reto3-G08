@@ -1,6 +1,8 @@
 import sys
 from App import logic as lg
-#import tabulate as tb
+from DataStructures.List import array_list as ar
+from DataStructures.Map import map_linear_probing as lp
+import tabulate as tb
 import csv  
 
 def new_logic():
@@ -95,11 +97,25 @@ def print_req_4(control):
 
 
 def print_req_5(control):
-    """
-        Función que imprime la solución del Requerimiento 5 en consola
-    """
-    # TODO: Imprimir el resultado del requerimiento 5
-    pass
+    
+    n = int(input("Ingrese el número de datos que deseas analizar: "))
+    start_date = input("Ingrese la fecha inical del rango en formato yyyy-mm-dd: ")
+    end_date = input("Ingrese la fecha final del rango en formato yyyy-mm-dd: ")
+
+    result = lg.req_5(control, n, start_date, end_date)
+    info = []
+    for mapa in result["elements"]:
+        area = int(lp.get(mapa, "area"))
+        area_name = lp.get(mapa, "area_name")
+        crime_count = lp.get(mapa, "crime_count")
+        first_crime_date = lp.get(mapa, "first_crime_date")
+        last_crime_date = lp.get(mapa, "last_crime_date")
+        info.append([area, area_name, crime_count, first_crime_date, last_crime_date])
+
+    headers = ["Area", "Nombre del area", "Cantidad de crimenes", "Fecha del primer crimen", "Fecha del último crimen"]
+    print(f"\nLas {n} áreas con mayor cantidad de crímenes sin resolver entre {start_date} y {end_date} son:\n")
+    print(tb.tabulate(info, headers, tablefmt="pretty"))
+
 
 
 def print_req_6(control):
