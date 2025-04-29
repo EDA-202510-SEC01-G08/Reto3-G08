@@ -19,19 +19,23 @@ def new_map(num_elements, load_factor, prime=109345121):
      return map
 
 def put(my_map, key, value):
-     
-     hash = mf.hash_value(my_map, key)
-     slot = int(find_slot(my_map, key, hash)[1])
+    hash = mf.hash_value(my_map, key)
+    slot = int(find_slot(my_map, key, hash)[1])
 
-     me.set_key(lt.get_element(my_map["table"], slot), key)
-     me.set_value(lt.get_element(my_map["table"], slot), value)
-     my_map["size"] += 1
-     my_map["current_factor"] = size(my_map) / my_map["capacity"]
+    entry = lt.get_element(my_map["table"], slot)
+    if me.get_key(entry) is None or me.get_key(entry) == "__EMPTY__":
+        # Only increment size if the key is new
+        my_map["size"] += 1
 
-     if my_map["current_factor"] > my_map["limit_factor"]:
-         return rehash(my_map)
-     
-     return my_map
+    me.set_key(entry, key)
+    me.set_value(entry, value)
+
+    my_map["current_factor"] = size(my_map) / my_map["capacity"]
+
+    if my_map["current_factor"] > my_map["limit_factor"]:
+        return rehash(my_map)
+
+    return my_map
 
 def contains(my_map, key):
     

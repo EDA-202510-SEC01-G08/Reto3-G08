@@ -64,7 +64,7 @@ def load_data(catalog, filename):
             sc.put(map_una_fila, "Date Rptd", dt.strptime(row["Date Rptd"], "%m/%d/%Y %H:%M:%S %p"))
             sc.put(map_una_fila, "DATE OCC", dt.strptime(row["DATE OCC"], "%m/%d/%Y %H:%M:%S %p"))
             sc.put(map_una_fila, "TIME OCC", row["TIME OCC"])
-            sc.put(map_una_fila, "AREA", row["AREA"])
+            sc.put(map_una_fila, "AREA", int(row["AREA"]))
             sc.put(map_una_fila, "AREA NAME", row["AREA NAME"])
             sc.put(map_una_fila, "Rptd Dist No", row["Rpt Dist No"])
             sc.put(map_una_fila, "Part 1-2", row["Part 1-2"])
@@ -322,78 +322,70 @@ def req_4(catalog):
 
 
 def req_5(catalog, n, start_date, end_date):
-    """
-    Requerimiento 5: Consultar las N áreas con mayor cantidad de crímenes no resueltos
-    ocurridos en un rango de fechas.
-    """
-    # Convert input dates to datetime objects
+    
     start_date = dt.strptime(start_date, "%Y-%m-%d")
     end_date = dt.strptime(end_date, "%Y-%m-%d")
 
-    # Get the RBT for "fecha_occ" (date of occurrence)
-    rbt_fecha_occ = lp.get(catalog, "DATE OCC")
+    rbt_fecha_occ = lp.get(catalog, "fecha_occ")
+    
+    crimes_in_range = rbt.values(rbt_fecha_occ, start_date, end_date)
+    # Array que contiene arrays de mapas, cada mapa es una fila de datos
+    # Se crea una lista para almacenar los crímenes no resueltos
 
-    # Filter crimes within the date range
-    crimes_in_range = ar.new_list()
-    for date in rbt.keys(rbt_fecha_occ):
-        if start_date <= date <= end_date:
-            crimes_on_date = rbt.get(rbt_fecha_occ, date)
-            for crime in crimes_on_date:
-                if sc.get(crime, "Status") == "IC":  # "IC" means unresolved
-                    ar.add_last(crimes_in_range, crime)
+    crimes_ic = ar.new_list() 
+    for array in crimes_in_range["elements"]:
+        for mapa in array["elements"]:
+            if sc.get(mapa, "Status") == "IC":
+                ar.add_last(crimes_ic, mapa)
 
-    # Group crimes by area and count unresolved crimes
-    area_crime_count = {}
-    for crime in crimes_in_range["elements"]:
-        area = sc.get(crime, "AREA")
-        area_name = sc.get(crime, "AREA NAME")
-        if area not in area_crime_count:
-            area_crime_count[area] = {
-                "area_name": area_name,
-                "crime_count": 0,
-                "first_crime_date": None,
-                "last_crime_date": None,
-            }
-        area_crime_count[area]["crime_count"] += 1
-        crime_date = sc.get(crime, "DATE OCC")
-        if (
-            area_crime_count[area]["first_crime_date"] is None
-            or crime_date < area_crime_count[area]["first_crime_date"]
-        ):
-            area_crime_count[area]["first_crime_date"] = crime_date
-        if (
-            area_crime_count[area]["last_crime_date"] is None
-            or crime_date > area_crime_count[area]["last_crime_date"]
-        ):
-            area_crime_count[area]["last_crime_date"] = crime_date
+    #crimes_ic es un array que tiene mapas, cada mapa es una fila que está en el rango y que tiene como status IC
 
-    # Convert the dictionary to a list for sorting
-    area_list = ar.new_list()
-    for area, data in area_crime_count.items():
-        ar.add_last(area_list, {
-            "area": area,
-            "area_name": data["area_name"],
-            "crime_count": data["crime_count"],
-            "first_crime_date": data["first_crime_date"],
-            "last_crime_date": data["last_crime_date"],
-        })
+    area_crime_count = rbt.new_map()
+    # Creo un arbol que tiene como llave el area y voy sumando la cantidad de crimenes que hay en cada area
+    for mapa in crimes_ic["elements"]:
+        area = int(sc.get(mapa, "AREA"))
+        area_name = sc.get(mapa, "AREA NAME")
+        if rbt.contains(area_crime_count, area) == False:
+            rbt.put(area_crime_count, area, lp.new_map(5, 0.5, 109345121))
+            lp.put(rbt.get(area_crime_count, area), "area_name", area_name)
+            lp.put(rbt.get(area_crime_count, area), "crime_count", 0)
+            lp.put(rbt.get(area_crime_count, area), "first_crime_date", None)
+            lp.put(rbt.get(area_crime_count, area), "last_crime_date", None)
+            lp.put(rbt.get(area_crime_count, area), "area", area)
+        lp.put(rbt.get(area_crime_count, area), "crime_count", lp.get(rbt.get(area_crime_count, area), "crime_count") + 1)
+        crime_date = sc.get(mapa, "DATE OCC")
+        if lp.get(rbt.get(area_crime_count, area), "first_crime_date") is None or crime_date < lp.get(rbt.get(area_crime_count, area), "first_crime_date"):
+            lp.put(rbt.get(area_crime_count, area), "first_crime_date", crime_date)
+        if lp.get(rbt.get(area_crime_count, area), "last_crime_date") is None or crime_date > lp.get(rbt.get(area_crime_count, area), "last_crime_date"):
+            lp.put(rbt.get(area_crime_count, area), "last_crime_date", crime_date)
+
+    # Ahora la idea es sacar el values del arbol que me va a dar un stack con los mapas y 
+    # ordenar el stack por la cantidad de crimenes que hay en cada area con merge_sort
+
+    mapas_area = rbt.value_set(area_crime_count)
+    # lista que contiene los mapas de cada area
 
     # Sort the areas using merge_sort and the custom sort criteria
-    sorted_areas = ar.merge_sort(area_list, ar.area_sort_criteria)
+    sorted_areas = ar.merge_sort(mapas_area, area_sort_criteria_5)
 
     # Get the top N areas
-    top_n_areas = ar.sub_list(sorted_areas, 0, n)
+    top_n_areas_maps = ar.sub_list(sorted_areas, 0, n)
 
-    return top_n_areas
+    return top_n_areas_maps
 
-def area_sort_criteria_5(area_1, area_2):
 
-    if area_1["crime_count"] > area_2["crime_count"]:
-        return True  
-    elif area_1["crime_count"] < area_2["crime_count"]:
-        return False  
+def area_sort_criteria_5(mapa_1, mapa_2):
+
+    if lp.get(mapa_1, "crime_count") > lp.get(mapa_2, "crime_count"):
+        return True
+    elif lp.get(mapa_1, "crime_count") == lp.get(mapa_2, "crime_count"):
+        if lp.get(mapa_1, "area_name") < lp.get(mapa_2, "area_name"):
+            return True
+        else:
+            return False
     else:
-        return area_1["area_name"] < area_2["area_name"]
+        return False
+
 
 def req_6(catalog):
     """
