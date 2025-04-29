@@ -178,7 +178,9 @@ def sort_crit_1(record_1, record_2):
 
     if fecha_a > fecha_b:
         return True
-    elif fecha_a <= fecha_b:
+    elif fecha_a < fecha_b:
+        return False
+    elif fecha_a == fecha_b:
         area_1 = sc.get(record_1, "area")
         area_2 = sc.get(record_2, "area")
         if area_1 > area_2:
@@ -253,7 +255,9 @@ def sort_crit_2(record_1, record_2):
 
     if fecha_a > fecha_b:
         return True
-    elif fecha_a <= fecha_b:
+    elif fecha_a < fecha_b:
+        return False
+    elif fecha_a == fecha_b:
         area_1 = sc.get(record_1, "area_name")
         area_2 = sc.get(record_2, "area_name")
         if area_1 > area_2:
