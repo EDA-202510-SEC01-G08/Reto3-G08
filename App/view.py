@@ -77,7 +77,7 @@ def print_req_2(control):
     else:
         time = result[1]
         data = result[0]
-        headers = ["Identificador del crimen", "Fecha", "Hora", "Area", "Subarea", "Gravedad", "Código del crimen", "Estado del caso", "Fevha de reporte"]
+        headers = ["Identificador del crimen", "Fecha", "Hora", "Area", "Subarea", "Gravedad", "Código del crimen", "Estado del caso"]
         if ar.size(data) < 5:
             print(print(tb.tabulate(data["elements"], headers, tablefmt="pretty")))
         else:
