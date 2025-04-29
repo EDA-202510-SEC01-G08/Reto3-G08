@@ -199,7 +199,7 @@ def req_2(catalog, fecha_i, fecha_f):
     fecha_1 = dt.strptime(fecha_i, "%m/%d/%Y")
     fecha_2 = dt.strptime(fecha_f, "%m/%d/%Y")
 
-    fechas = lp.get(catalog, "fecha_occ")
+    fechas = lp.get(catalog, "fecha_rptd")
 
     lista_valores = rbt.values(fechas, fecha_1, fecha_2)
     lista = ar.new_list()
