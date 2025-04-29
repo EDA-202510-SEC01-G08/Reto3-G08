@@ -1,6 +1,7 @@
 import sys
 from App import logic as lg
-#import tabulate as tb
+from DataStructures.List import array_list as ar
+import tabulate as tb
 import csv  
 
 def new_logic():
@@ -22,21 +23,18 @@ def print_menu():
 def load_data(control):
 
     file = input("Ingrese el nombre del archivo a cargar: ")
-    file_path = f"Data/Crime_in_LA/{file}" 
+    file_path = f"Data/Crime_in_LA/Crime_in_LA_{file}.csv" 
 
     data = lg.load_data(control, file_path)
     headers_generales = ["Tiempo de carga", "N° de registros"]
-    print(data[0])
-    #print(tb.tabulate([data[0]["elements"]], headers_generales, tablefmt="pretty"))    
+    print(tb.tabulate([data[0]["elements"]], headers_generales, tablefmt="pretty"))    
     print(f"\nLos primeros 5 registros son:\n")
     primeros = data[1]["elements"]
-    print(primeros)
     headers = ["DR_NO", "Date Rptd", "DATE OCC", "AREA NAME", "Crm Cd"]  
-    #print(tb.tabulate(primeros, headers, tablefmt="pretty"))
+    print(tb.tabulate(primeros, headers, tablefmt="pretty"))
     print(f"\nLos últimos 5 registros son:\n")
     primeros = data[2]["elements"] 
-    print(primeros) 
-    #print(tb.tabulate(primeros, headers, tablefmt="pretty"))
+    print(tb.tabulate(primeros, headers, tablefmt="pretty"))
 
 
 def print_data(control, id):
@@ -52,14 +50,17 @@ def print_req_1(control):
     """
     # TODO: Imprimir el resultado del requerimiento 1
 
-    fecha_i = input("Ingrese la fecha inical del rango en formato mm/dd/yyyy: ")
-    fecha_f = input("Ingrese la fecha final del rango en formato mm/dd/yyyy: ")
+    fecha_i = input("\nIngrese la fecha inical del rango en formato mm/dd/yyyy: ")
+    fecha_f = input("\nIngrese la fecha final del rango en formato mm/dd/yyyy: ")
     result = lg.req_1(control, fecha_i, fecha_f)
     if result == None:
-        print("No se encontraron crimenes en ese rango de fechas")
+        print(f"\nNo se encontraron crimenes entre {fecha_i} - {fecha_f}")
     else:
-        print(result[0])
         headers = ["Identificador del reporte", "Fecha", "Hora", "Nombre del Area", "Codigo del crimen", "Direccion"]
+        print(result[1])
+        print(f"\nLos crimenes encontrados entre {fecha_i} - {fecha_f} son:\n")
+        data = result[0]["elements"]
+        print(tb.tabulate(data, headers, tablefmt="pretty"))
 
 
 def print_req_2(control):
@@ -67,7 +68,22 @@ def print_req_2(control):
         Función que imprime la solución del Requerimiento 2 en consola
     """
     # TODO: Imprimir el resultado del requerimiento 2
-    pass
+    fecha_i = input("\nIngrese la fecha inical del rango en formato mm/dd/yyyy: ")
+    fecha_f = input("\nIngrese la fecha final del rango en formato mm/dd/yyyy: ")
+    result = lg.req_2(control, fecha_i, fecha_f)
+    if result == None:
+        print(f"\nNo se encontraron crimenes resueltos entre {fecha_i} - {fecha_f}")
+    else:
+        time = result[1]
+        data = result[0]
+        primeros = ar.sub_list(data, 5, 5)["elements"][::-1]
+        ultimos = ar.sub_list(data, 0, 5)["elements"][::-1]
+        headers = ["Identificador del crimen", "Fecha", "Hora", "Area", "Subarea", "Gravedad", "Código del crimen", "Estado del caso"]
+        print(time)
+        print(f"\nLos primeros 5 crimenes resueltos entre {fecha_i} - {fecha_f} son:\n")
+        print(tb.tabulate(primeros, headers, tablefmt="pretty"))
+        print(f"\nLos ultimos 5 crimenes resueltos entre {fecha_i} - {fecha_f} son:\n")
+        print(tb.tabulate(ultimos, headers, tablefmt="pretty"))
 
 
 def print_req_3(control):
@@ -81,9 +97,12 @@ def print_req_3(control):
     if result == None:
         print("No se encontraron crimenes en el área buscada: ")
     else:
-        print(result[0])
-        print(result[2])
         print(result[1])
+        print(result[2])
+        headers = ["Identificador del crimen", "Fecha", "Hora", "Area", "Subarea", "Gravedad", "Codigo del crimen", "Estado del caso", "Dirección"]
+        data = result[0]["elements"]
+        print(f"\nLos {n} crimenes mas recientemente reportados en {area_name} son:\n")
+        print(tb.tabulate(data, headers, tablefmt="pretty"))
 
 
 def print_req_4(control):

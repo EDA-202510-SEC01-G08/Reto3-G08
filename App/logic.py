@@ -135,8 +135,6 @@ def req_1(catalog, fecha_i, fecha_f):
     fechas = lp.get(catalog, "fecha_occ")
     lista_valores = rbt.values(fechas, fecha_1, fecha_2)
     lista = ar.new_list()
-    print(lista_valores)
-    "a"
     for list in lista_valores["elements"]:
         for hash in list["elements"]:
             ar.add_last(lista, hash)
@@ -170,7 +168,7 @@ def req_1(catalog, fecha_i, fecha_f):
             ar.add_last(lista_final, lista_un_dato)
             
     end_time = get_time()
-    time = delta_time(start_time, end_time)    
+    time = str(round(delta_time(start_time, end_time), 2)) + "ms" 
 
     return lista_final, time
     
@@ -178,12 +176,9 @@ def sort_crit_1(record_1, record_2):
     fecha_a = sc.get(record_1, "fecha")
     fecha_b = sc.get(record_2, "fecha")
 
-    fecha_1 = dt.strptime(fecha_a, "%m/%d/%Y %H:%M:%s")
-    fecha_2 = dt.strptime(fecha_b, "%m/%d/%Y %H:%M:%s")
-
-    if fecha_1 > fecha_2:
+    if fecha_a > fecha_b:
         return True
-    elif fecha_1 <= fecha_2:
+    elif fecha_a <= fecha_b:
         area_1 = sc.get(record_1, "area")
         area_2 = sc.get(record_2, "area")
         if area_1 > area_2:
@@ -249,19 +244,16 @@ def req_2(catalog, fecha_i, fecha_f):
             lista_final = lista_final_2
 
     end_time = get_time()
-    time = delta_time(start_time, end_time)    
+    time = str(round(delta_time(start_time, end_time),2)) + "ms" 
     return lista_final, time
 
 def sort_crit_2(record_1, record_2):
     fecha_a = sc.get(record_1, "fecha_rptd")
     fecha_b = sc.get(record_2, "fecha_rptd")
 
-    fecha_1 = dt.strptime(fecha_a, "%m/%d/%Y %H:%M:%s")
-    fecha_2 = dt.strptime(fecha_b, "%m/%d/%Y %H:%M:%s")
-
-    if fecha_1 > fecha_2:
+    if fecha_a > fecha_b:
         return True
-    elif fecha_1 <= fecha_2:
+    elif fecha_a <= fecha_b:
         area_1 = sc.get(record_1, "area_name")
         area_2 = sc.get(record_2, "area_name")
         if area_1 > area_2:
@@ -309,7 +301,7 @@ def req_3(catalog, N, area_name):
             ar.add_last(lista_completa, lista_un_dato)
         lista_final = ar.sub_list(lista_completa, 0, N)
     end_time = get_time()
-    time = delta_time(start_time, end_time)
+    time = str(round(delta_time(start_time, end_time),2)) + "ms"
     return lista_final, time, total_crimes
     
 def sort_crit_3(record_1, record_2):
