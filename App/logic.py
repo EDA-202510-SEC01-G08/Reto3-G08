@@ -197,9 +197,10 @@ def req_4(catalog, N, edad_i, edad_f):
         ar.add_last(respuesta, info)
 
     end_time = get_time()
-    time = delta_time(start_time, end_time)
+    tiempo_carga = delta_time(start_time, end_time)
 
-    return ar.size(crimenes_ordenados), respuesta, time
+    total_crimenes = ar.size(crimenes_ordenados)
+    return tiempo_carga, total_crimenes, respuesta
 
 def sort_crit_4(record_1, record_2):
     edad_1 = int(sc.get(record_1, "Vict Age"))
@@ -231,11 +232,13 @@ def req_5(catalog):
     pass
 
 
-def req_6(catalog, sexo, mes, N):
+def req_6(catalog,N,sexo, mes):
     """
     Retorna el resultado del requerimiento 6
     """
     # TODO: Modificar el requerimiento 6
+
+    start_time = get_time()
 
     # Crear una lista vacía para almacenar la información de crímenes por área
     crímenes_por_area = ar.new_list()
@@ -293,8 +296,10 @@ def req_6(catalog, sexo, mes, N):
             "cantidad_crímenes": area_info["crímenes"],
             "años": años_info
         })
-    
-    return respuesta
+    end_time = get_time()
+    tiempo_carga = delta_time(start_time, end_time)
+
+    return tiempo_carga,respuesta
 
 
 def sort_crit_6(record_1, record_2):
