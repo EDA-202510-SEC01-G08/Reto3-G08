@@ -77,11 +77,11 @@ def print_req_2(control):
     else:
         time = result[1]
         data = result[0]
-        headers = ["Identificador del crimen", "Fecha", "Hora", "Area", "Subarea", "Gravedad", "Código del crimen", "Estado del caso"]
+        headers = ["Identificador del crimen", "Fecha", "Hora", "Area", "Subarea", "Gravedad", "Código del crimen", "Estado del caso", "fecha rptd", "area nombre"]
         if ar.size(data) < 5:
             print(print(tb.tabulate(data["elements"], headers, tablefmt="pretty")))
         else:
-            primeros = ar.sub_list(data, 5, 5)["elements"]
+            primeros = ar.sub_list(data, 5, 5)["elements"][::-1]
             ultimos = ar.sub_list(data, 0, 5)["elements"][::-1]
             print(time)
             print(f"\nLos primeros 5 crimenes resueltos entre {fecha_i} - {fecha_f} son:\n")

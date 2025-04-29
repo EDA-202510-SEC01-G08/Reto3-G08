@@ -236,7 +236,9 @@ def req_2(catalog, fecha_i, fecha_f):
                              sc.get(ar.get_element(lista, index), "Rptd Dist No"),
                              sc.get(ar.get_element(lista, index), "Part 1-2"),
                              sc.get(ar.get_element(lista, index), "Crm Cd"),
-                             sc.get(ar.get_element(lista, index), "Status")]
+                             sc.get(ar.get_element(lista, index), "Status"),
+                             sc.get(ar.get_element(lista, index), "Date Rptd"),
+                             sc.get(ar.get_element(lista, index), "AREA NAME"),]
             ar.add_last(lista_final, lista_un_dato)
         
         if ar.size(lista_final) > 10:
