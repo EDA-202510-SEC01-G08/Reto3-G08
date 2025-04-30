@@ -90,7 +90,7 @@ def load_data(catalog, filename):
             ar.add_last(rbt.get(rbt_fecha_occured, dt.strptime(row["DATE OCC"], "%m/%d/%Y %H:%M:%S %p")), map_una_fila)
             ar.add_last(rbt.get(rbt_fecha_rptd, dt.strptime(row["Date Rptd"], "%m/%d/%Y %H:%M:%S %p")), map_una_fila)
             ar.add_last(rbt.get(rbt_area_name, row["AREA NAME"]), map_una_fila)
-            ar.add_last(rbt.get(rbt_edad, int(row["Vict Age"])), map_una_fila)
+            ar.add_last(rbt.get(rbt_edad, row["Vict Age"]), map_una_fila)
             ar.add_last(rbt.get(bst_genero, row["Vict Sex"]), map_una_fila)
 
             datos_listas = [row["DR_NO"],
@@ -321,7 +321,7 @@ def sort_crit_3(record_1, record_2):
     else:
         return False
 
-def req_4(catalog):
+def req_4(catalog, N, edad_i, edad_f):
     """
     Retorna el resultado del requerimiento 4
     """
@@ -329,78 +329,125 @@ def req_4(catalog):
     pass
 
 
-def req_5(catalog, n, start_date, end_date):
-    
-    start_date = dt.strptime(start_date, "%Y-%m-%d")
-    end_date = dt.strptime(end_date, "%Y-%m-%d")
-
-    rbt_fecha_occ = lp.get(catalog, "fecha_occ")
-    
-    crimes_in_range = rbt.values(rbt_fecha_occ, start_date, end_date)
-    # Array que contiene arrays de mapas, cada mapa es una fila de datos
-    # Se crea una lista para almacenar los crímenes no resueltos
-
-    crimes_ic = ar.new_list() 
-    for array in crimes_in_range["elements"]:
-        for mapa in array["elements"]:
-            if sc.get(mapa, "Status") == "IC":
-                ar.add_last(crimes_ic, mapa)
-
-    #crimes_ic es un array que tiene mapas, cada mapa es una fila que está en el rango y que tiene como status IC
-
-    area_crime_count = rbt.new_map()
-    # Creo un arbol que tiene como llave el area y voy sumando la cantidad de crimenes que hay en cada area
-    for mapa in crimes_ic["elements"]:
-        area = int(sc.get(mapa, "AREA"))
-        area_name = sc.get(mapa, "AREA NAME")
-        if rbt.contains(area_crime_count, area) == False:
-            rbt.put(area_crime_count, area, lp.new_map(5, 0.5, 109345121))
-            lp.put(rbt.get(area_crime_count, area), "area_name", area_name)
-            lp.put(rbt.get(area_crime_count, area), "crime_count", 0)
-            lp.put(rbt.get(area_crime_count, area), "first_crime_date", None)
-            lp.put(rbt.get(area_crime_count, area), "last_crime_date", None)
-            lp.put(rbt.get(area_crime_count, area), "area", area)
-        lp.put(rbt.get(area_crime_count, area), "crime_count", lp.get(rbt.get(area_crime_count, area), "crime_count") + 1)
-        crime_date = sc.get(mapa, "DATE OCC")
-        if lp.get(rbt.get(area_crime_count, area), "first_crime_date") is None or crime_date < lp.get(rbt.get(area_crime_count, area), "first_crime_date"):
-            lp.put(rbt.get(area_crime_count, area), "first_crime_date", crime_date)
-        if lp.get(rbt.get(area_crime_count, area), "last_crime_date") is None or crime_date > lp.get(rbt.get(area_crime_count, area), "last_crime_date"):
-            lp.put(rbt.get(area_crime_count, area), "last_crime_date", crime_date)
-
-    # Ahora la idea es sacar el values del arbol que me va a dar un stack con los mapas y 
-    # ordenar el stack por la cantidad de crimenes que hay en cada area con merge_sort
-
-    mapas_area = rbt.value_set(area_crime_count)
-    # lista que contiene los mapas de cada area
-
-    # Sort the areas using merge_sort and the custom sort criteria
-    sorted_areas = ar.merge_sort(mapas_area, area_sort_criteria_5)
-
-    # Get the top N areas
-    top_n_areas_maps = ar.sub_list(sorted_areas, 0, n)
-
-    return top_n_areas_maps
+def req_5(catalog):
+    """
+    Retorna el resultado del requerimiento 5
+    """
+    # TODO: Modificar el requerimiento 5
+    pass
 
 
-def area_sort_criteria_5(mapa_1, mapa_2):
-
-    if lp.get(mapa_1, "crime_count") > lp.get(mapa_2, "crime_count"):
-        return True
-    elif lp.get(mapa_1, "crime_count") == lp.get(mapa_2, "crime_count"):
-        if lp.get(mapa_1, "area_name") < lp.get(mapa_2, "area_name"):
-            return True
-        else:
-            return False
-    else:
-        return False
-
-
-def req_6(catalog):
+def req_6(catalog,N,genero, mes):
     """
     Retorna el resultado del requerimiento 6
-    """
-    # TODO: Modificar el requerimiento 6
-    pass
+     start_time = get_time()
+"""
+    crímenes_por_area = ar.new_list()
+    
+    # Obtener lista de listas de crímenes por género
+    crimenes_genero = bst.values(catalog, genero, genero)
+
+    i = 0
+    while i < ar.size(crimenes_genero):
+        lista = ar.get(crimenes_genero, i)
+        j = 0
+        while j < ar.size(lista):
+            crimen = ar.get(lista, j)
+
+            fecha = sc.get(crimen, "DATE OCC")
+            area = sc.get(crimen, "AREA NAME")
+
+            # Validación mínima sin try
+            if fecha is not None and fecha.count("/") == 2 and area is not None:
+                partes = fecha.split("/")
+                mes_crimen = int(partes[0])
+                año_crimen = int(partes[2])
+
+                if mes_crimen == mes:
+                    # Revisar si ya existe el área
+                    k = 0
+                    encontrado = False
+                    while k < ar.size(crímenes_por_area):
+                        area_info = ar.get(crímenes_por_area, k)
+                        if area_info["area"] == area:
+                            area_info["crimenes"] += 1
+
+                            # Verificar si el año ya está en su lista
+                            ya_registrado = False
+                            l = 0
+                            while l < ar.size(area_info["años"]):
+                                año_registrado = ar.get(area_info["años"], l)
+                                if año_registrado == año_crimen:
+                                    ya_registrado = True
+                                l += 1
+                            if not ya_registrado:
+                                ar.add_last(area_info["años"], año_crimen)
+                            encontrado = True
+                        k += 1
+                    
+                    # Si no estaba el área, se agrega
+                    if not encontrado:
+                        nueva_area = {
+                            "area": area,
+                            "nombre_area": area,
+                            "crimenes": 1,
+                            "años": ar.new_list()
+                        }
+                        ar.add_last(nueva_area["años"], año_crimen)
+                        ar.add_last(crímenes_por_area, nueva_area)
+
+            j += 1
+        i += 1
+
+    # Ordenar
+    areas_ordenadas = ar.merge_sort(crímenes_por_area, sort_crit_6)
+
+    # Extraer solo los primeros N
+    respuesta = ar.new_list()
+    contador = 0
+    while contador < N and contador < ar.size(areas_ordenadas):
+        area_info = ar.get(areas_ordenadas, contador)
+
+        # Crear años como tuplas (crímenes, año)
+        años = ar.new_list()
+        m = 0
+        while m < ar.size(area_info["años"]):
+            año = ar.get(area_info["años"], m)
+            tupla = (area_info["crimenes"], año)
+            ar.add_last(años, tupla)
+            m += 1
+
+        ar.add_last(respuesta, {
+            "area": area_info["area"],
+            "nombre_area": area_info["nombre_area"],
+            "cantidad_crímenes": area_info["crimenes"],
+            "años": años
+        })
+        contador += 1
+
+    end_time = get_time()
+    tiempo = delta_time(start_time, end_time)
+
+    return tiempo, respuesta
+
+
+def sort_crit_6(r1, r2):
+    c1 = r1["crimenes"]
+    c2 = r2["crimenes"]
+
+    if c1 < c2:
+        return True
+    elif c1 > c2:
+        return False
+    else:
+        a1 = ar.size(r1["años"])
+        a2 = ar.size(r2["años"])
+        if a1 < a2:
+            return True
+        elif a1 > a2:
+            return False
+        else:
+            return r1["nombre_area"] < r2["nombre_area"]
 
 
 def req_7(catalog, N, victim_sex, age_start, age_end):
