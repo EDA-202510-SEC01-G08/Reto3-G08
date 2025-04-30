@@ -237,6 +237,8 @@ def req_6(catalog,N,genero, mes):
     Retorna el resultado del requerimiento 6
      start_time = get_time()
 """
+    start_time = get_time()
+
     crímenes_por_area = ar.new_list()
     
     # Obtener lista de listas de crímenes por género
