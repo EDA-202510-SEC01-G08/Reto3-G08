@@ -303,7 +303,9 @@ def req_3(catalog, N, area_name):
                              sc.get(ar.get_element(crimes_in_area, index), "Part 1-2"),
                              sc.get(ar.get_element(crimes_in_area, index), "Crm Cd"),
                              sc.get(ar.get_element(crimes_in_area, index), "Status"),
-                             sc.get(ar.get_element(crimes_in_area, index), "LOCATION")]
+                             sc.get(ar.get_element(crimes_in_area, index), "LOCATION"),
+                             sc.get(ar.get_element(crimes_in_area, index), "Date Rptd"),
+                             sc.get(ar.get_element(crimes_in_area, index), "AREA NAME")]
             ar.add_last(lista_completa, lista_un_dato)
         lista_final = ar.sub_list(lista_completa, 0, N)
     end_time = get_time()
