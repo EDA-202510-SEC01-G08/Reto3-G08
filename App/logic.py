@@ -475,77 +475,96 @@ def area_sort_criteria_5(mapa_1, mapa_2):
         return False
 
 
-def req_6(catalog,N,genero, mes):
+def req_6(catalog, N, genero, mes):
     """
-    Retorna el resultado del requerimiento 6
-     start_time = get_time()
-"""
+    Consulta las N áreas más seguras para un sexo en un mes específico del año.
+    """
     start_time = get_time()
 
-    # Crear una lista vacía para almacenar la información de crímenes por área
-    crímenes_por_area = ar.new_list()
+    # Obtener el árbol de fechas de ocurrencia
+    rbt_fecha_occ = lp.get(catalog, "fecha_occ")
 
-    # Obtener el árbol de crímenes filtrados por sexo
-    crimenes_sexo = bst.get(catalog, genero)  # Asegúrate de usar el método correcto para obtener los crímenes por género
+    # Crear un mapa para contar los crímenes por área
+    area_crime_map = rbt.new_map()
 
-    # Recorrer los crímenes filtrados por sexo
-    for lista in crimenes_sexo["elements"]:
-        for hash in lista["elements"]:
-            area = sc.get(hash, "AREA NAME")
-            fecha_crimen = sc.get(hash, "DATE OCC")
-            
-            # Separar la fecha para obtener solo la parte de la fecha sin la hora
-            fecha_sin_hora = fecha_crimen.split(" ")[0]
-            
-            # Obtener el mes y el año del crimen (fecha en formato MM/DD/YYYY)
-            mes_crimen, dia_crimen, año_crimen = map(int, fecha_sin_hora.split("/"))
-            
-            # Verificar si el crimen ocurrió en el mes dado
-            if mes_crimen == mes:
-                # Buscar si el área ya está en la lista
-                area_encontrada = False
-                for i in range(ar.size(crímenes_por_area)):
-                    area_info = ar.get(crímenes_por_area, i)
-                    if area_info["area"] == area:
-                        # Si el área ya existe, actualizamos la cantidad de crímenes y los años
-                        area_info["crímenes"] += 1
-                        if año_crimen not in area_info["años"]:
-                            ar.add_last(area_info["años"], año_crimen)
-                        area_encontrada = True
-                        
-                # Si el área no fue encontrada, la agregamos a la lista
-                if not area_encontrada:
-                    area_info = {
-                        "area": area,
-                        "nombre_area": area,  # `area` y `nombre_area` probablemente son iguales aquí
-                        "crímenes": 1,
-                        "años": [año_crimen]
-                    }
-                    ar.add_last(crímenes_por_area, area_info)
+    # Recorrer todas las fechas en el árbol
+    fechas = rbt.value_set(rbt_fecha_occ)
+    for lista_crimenes in fechas["elements"]:
+        for crimen in lista_crimenes["elements"]:
+            # Filtrar por mes y género
+            crime_date = sc.get(crimen, "DATE OCC")
+            crime_month = crime_date.month
+            crime_gender = sc.get(crimen, "Vict Sex")
 
-    # Ordenar las áreas: primero por crímenes y luego por cantidad de años si hay empate
-    areas_ordenadas = ar.merge_sort(crímenes_por_area, sort_crit_6)
-    
-    # Limitar el número de áreas a N
-    areas_ordenadas = areas_ordenadas[:N]
-    
-    # Generar la respuesta utilizando una lista de ar
-    respuesta = ar.new_list()
-    for area_info in areas_ordenadas:
-        # Convertir la lista de años en una lista de tuplas (crímenes, año)
-        años_info = [(area_info["crímenes"], año) for año in area_info["años"]]
-        
-        ar.add_last(respuesta, {
-            "area": area_info["area"],
-            "nombre_area": area_info["nombre_area"],
-            "cantidad_crímenes": area_info["crímenes"],
-            "años": años_info
-        })
-    
+            if crime_month == mes and crime_gender == genero:
+                area = int(sc.get(crimen, "AREA"))
+                area_name = sc.get(crimen, "AREA NAME")
+                crime_year = crime_date.year
+
+                # Si el área no está en el mapa, inicializarla
+                if not rbt.contains(area_crime_map, area):
+                    area_data = lp.new_map(5, 0.5, 109345121)
+                    lp.put(area_data, "area", area)
+                    lp.put(area_data, "area_name", area_name)
+                    lp.put(area_data, "crime_count", 0)
+                    lp.put(area_data, "year_count", rbt.new_map())
+                    rbt.put(area_crime_map, area, area_data)
+
+                # Actualizar el conteo de crímenes
+                area_data = rbt.get(area_crime_map, area)
+                lp.put(area_data, "crime_count", lp.get(area_data, "crime_count") + 1)
+
+                # Actualizar el conteo de crímenes por año
+                year_map = lp.get(area_data, "year_count")
+                if not rbt.contains(year_map, crime_year):
+                    rbt.put(year_map, crime_year, (crime_year, 0))
+                rbt.put(year_map, crime_year, (crime_year, rbt.get(year_map, crime_year)[1] + 1))
+
+    # Convertir el mapa de áreas a una lista para ordenar
+    area_list = rbt.value_set(area_crime_map)
+
+    # Ordenar las áreas por los criterios especificados
+    sorted_areas = ar.merge_sort(area_list, sort_criteria_6)
+
+    # Obtener las N áreas más seguras
+    top_n_areas = ar.sub_list(sorted_areas, 0, N)
+
+
     end_time = get_time()
-    tiempo_carga = delta_time(start_time, end_time)
+    elapsed_time = str(round(delta_time(start_time, end_time), 2)) + "ms"
 
-    return tiempo_carga, respuesta
+    return top_n_areas, elapsed_time
+
+
+def sort_criteria_6(area_1, area_2):
+    """
+    Criterio de ordenamiento para las áreas:
+    1. Menor a mayor por cantidad de crímenes.
+    2. Si hay empate, menor a mayor por cantidad de años en los que ocurrieron crímenes.
+    3. Si persiste el empate, ordenar lexicográficamente por el nombre del área.
+    """
+    crime_count_1 = lp.get(area_1, "crime_count")
+    crime_count_2 = lp.get(area_2, "crime_count")
+
+    if crime_count_1 < crime_count_2:
+        return True
+    elif crime_count_1 > crime_count_2:
+        return False
+    else:
+        # Comparar por cantidad de años
+        year_count_1 = rbt.size(lp.get(area_1, "year_count"))
+        year_count_2 = rbt.size(lp.get(area_2, "year_count"))
+
+        if year_count_1 < year_count_2:
+            return True
+        elif year_count_1 > year_count_2:
+            return False
+        else:
+            # Comparar lexicográficamente por el nombre del área
+            area_name_1 = lp.get(area_1, "area_name")
+            area_name_2 = lp.get(area_2, "area_name")
+            return area_name_1 < area_name_2
+
 
 def sort_crit_6(record_1, record_2):
     crimenes_1 = record_1["crímenes"]

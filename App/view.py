@@ -181,38 +181,35 @@ def print_req_5(control):
 
 def print_req_6(control):
     """
-        Función que imprime la solución del Requerimiento 6 en consola
+    Función que imprime la solución del Requerimiento 6 en consola
     """
-    # TODO: Imprimir el resultado del requerimiento 6
     N = int(input("Ingrese el número de registros a mostrar: "))
-    sexo = input("Ingrese el sexo a filtrar: ")
-    mes = int(input("Ingrese el mes a filtrar: "))
+    sexo = input("Ingrese el sexo a filtrar (M/F): ").strip().upper()
+    mes = int(input("Ingrese el mes a filtrar (como un número del 1 al 12): "))
 
-    tiempo_carga, result = lg.req_6(control, N, sexo, mes)
+    # Llamar a la función del requerimiento 6
+    result, tiempo_carga = lg.req_6(control, N, sexo, mes)
 
     if ar.size(result) == 0:
         print(f"\nNo se encontraron registros para el sexo '{sexo}' en el mes '{mes}'.")
     else:
-        # Número total de áreas que cumplen el criterio
+        # Mostrar el tiempo de carga y el número total de áreas
         headers_generales = ["Tiempo de carga (ms)", "Número total de áreas"]
         print(tb.tabulate([[tiempo_carga, ar.size(result)]], headers_generales, tablefmt="pretty"))
 
-        # Información detallada de las áreas
+        # Mostrar los detalles de las áreas
         headers = ["Área", "Nombre del Área", "Cantidad de Crímenes", "Años con Crímenes"]
+        info = []
 
-        # Convertir los datos para tabular
-        
-        if ar.size(result[1]["elements"]) <= int(N):
-            print(f"\nLos registros encontrados para el sexo '{sexo}' en el mes '{mes}' son:\n")
-            print(tb.tabulate(result[1]["elements"], headers, tablefmt="pretty"))
-        else:
-            primeros_5 = ar.sub_list(result[1]["elements"], 0, 5)
-            ultimos_5 = ar.sub_list(result[1]["elements"], ar.size(result[1]["elements"]) - 5, 5)
-            print(f"\nLos primeros 5 registros para el sexo '{sexo}' en el mes '{mes}' son:\n")
-            print(tb.tabulate(primeros_5["elements"], headers, tablefmt="pretty"))
-            print(f"\nLos últimos 5 registros para el sexo '{sexo}' en el mes '{mes}' son:\n")
-            print(tb.tabulate(ultimos_5["elements"], headers, tablefmt="pretty"))
-    
+        for area_data in result["elements"]:
+            area = lp.get(area_data, "area")
+            area_name = lp.get(area_data, "area_name")
+            crime_count = lp.get(area_data, "crime_count")
+            year_count = rbt.value_set(lp.get(area_data, "year_count"))["elements"]
+            info.append([area, area_name, crime_count, year_count])
+
+        print(f"\nLas {N} áreas más seguras para el sexo '{sexo}' en el mes '{mes}' son:\n")
+        print(tb.tabulate(info, headers, tablefmt="pretty"))
 
 
 
