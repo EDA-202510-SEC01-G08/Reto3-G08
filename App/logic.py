@@ -235,102 +235,114 @@ def req_5(catalog):
 def req_6(catalog,N,genero, mes):
     """
     Retorna el resultado del requerimiento 6
-    """
-    # TODO: Modificar el requerimiento 6
-
-    start_time = get_time()
-
-    # Crear una lista vacía para almacenar la información de crímenes por área
+     start_time = get_time()
+"""
     crímenes_por_area = ar.new_list()
     
-    # Obtener el árbol de crímenes filtrados por sexo
-    crimenes_sexo = bst.values(catalog, genero, genero)
-    
-    # Recorrer los crímenes filtrados por sexo
-    for lista in crimenes_sexo["elements"]:
-        for hash in lista["elements"]:
-            area = sc.get(hash, "AREA NAME")
-            fecha_crimen = sc.get(hash, "DATE OCC")
-            
-            # Obtener el mes y el año del crimen
-            mes_crimen, dia_crimen, año_crimen = map(int, fecha_crimen.split("/"))
-            
-            # Verificar si el crimen ocurrió en el mes dado
-            if mes_crimen == mes:
-                # Buscar si el área ya está en la lista
-                area_encontrada = False
-                for i in range(ar.size(crímenes_por_area)):
-                    area_info = ar.get(crímenes_por_area, i)
-                    if area_info["area"] == area:
-                        # Si el área ya existe, actualizamos la cantidad de crímenes y los años
-                        area_info["crímenes"] += 1
-                        if año_crimen not in area_info["años"]:
-                            ar.add_last(area_info["años"],(año_crimen))
-                        area_encontrada = True
-                        
-                # Si el área no fue encontrada, la agregamos a la lista
-                if not area_encontrada:
-                    area_info = {
-                        "area": area,
-                        "nombre_area": sc.get(hash, "AREA NAME"),
-                        "crímenes": 1,
-                        "años": [año_crimen]
-                    }
-                    ar.add_last(crímenes_por_area, area_info)
+    # Obtener lista de listas de crímenes por género
+    crimenes_genero = bst.values(catalog, genero, genero)
 
-    # Ordenar las áreas utilizando la función de ordenación
+    i = 0
+    while i < ar.size(crimenes_genero):
+        lista = ar.get(crimenes_genero, i)
+        j = 0
+        while j < ar.size(lista):
+            crimen = ar.get(lista, j)
+
+            fecha = sc.get(crimen, "DATE OCC")
+            area = sc.get(crimen, "AREA NAME")
+
+            # Validación mínima sin try
+            if fecha is not None and fecha.count("/") == 2 and area is not None:
+                partes = fecha.split("/")
+                mes_crimen = int(partes[0])
+                año_crimen = int(partes[2])
+
+                if mes_crimen == mes:
+                    # Revisar si ya existe el área
+                    k = 0
+                    encontrado = False
+                    while k < ar.size(crímenes_por_area):
+                        area_info = ar.get(crímenes_por_area, k)
+                        if area_info["area"] == area:
+                            area_info["crimenes"] += 1
+
+                            # Verificar si el año ya está en su lista
+                            ya_registrado = False
+                            l = 0
+                            while l < ar.size(area_info["años"]):
+                                año_registrado = ar.get(area_info["años"], l)
+                                if año_registrado == año_crimen:
+                                    ya_registrado = True
+                                l += 1
+                            if not ya_registrado:
+                                ar.add_last(area_info["años"], año_crimen)
+                            encontrado = True
+                        k += 1
+                    
+                    # Si no estaba el área, se agrega
+                    if not encontrado:
+                        nueva_area = {
+                            "area": area,
+                            "nombre_area": area,
+                            "crimenes": 1,
+                            "años": ar.new_list()
+                        }
+                        ar.add_last(nueva_area["años"], año_crimen)
+                        ar.add_last(crímenes_por_area, nueva_area)
+
+            j += 1
+        i += 1
+
+    # Ordenar
     areas_ordenadas = ar.merge_sort(crímenes_por_area, sort_crit_6)
-    
-    # Limitar el número de áreas a N
-    areas_ordenadas = areas_ordenadas[:N]
-    
-    # Generar la respuesta utilizando una lista de ar
+
+    # Extraer solo los primeros N
     respuesta = ar.new_list()
-    for area_info in areas_ordenadas:
-        # Convertir la lista de años en una lista de tuplas (crímenes, año)
-        años_info = [(area_info["crímenes"], año) for año in area_info["años"]]
-        
+    contador = 0
+    while contador < N and contador < ar.size(areas_ordenadas):
+        area_info = ar.get(areas_ordenadas, contador)
+
+        # Crear años como tuplas (crímenes, año)
+        años = ar.new_list()
+        m = 0
+        while m < ar.size(area_info["años"]):
+            año = ar.get(area_info["años"], m)
+            tupla = (area_info["crimenes"], año)
+            ar.add_last(años, tupla)
+            m += 1
+
         ar.add_last(respuesta, {
             "area": area_info["area"],
             "nombre_area": area_info["nombre_area"],
-            "cantidad_crímenes": area_info["crímenes"],
-            "años": años_info
+            "cantidad_crímenes": area_info["crimenes"],
+            "años": años
         })
+        contador += 1
+
     end_time = get_time()
-    tiempo_carga = delta_time(start_time, end_time)
+    tiempo = delta_time(start_time, end_time)
 
-    return tiempo_carga,respuesta
+    return tiempo, respuesta
 
 
-def sort_crit_6(record_1, record_2):
-    # Obtener la cantidad de crímenes de cada área
-    crimenes_1 = record_1["crímenes"]
-    crimenes_2 = record_2["crímenes"]
-    
-    # Primero, comparamos por la cantidad de crímenes (de menor a mayor)
-    if crimenes_1 < crimenes_2:
+def sort_crit_6(r1, r2):
+    c1 = r1["crimenes"]
+    c2 = r2["crimenes"]
+
+    if c1 < c2:
         return True
-    elif crimenes_1 > crimenes_2:
+    elif c1 > c2:
         return False
     else:
-        # Si los crímenes son iguales, comparamos por la cantidad de años en los que ocurrieron crímenes
-        años_1 = len(record_1["años"])  # El tamaño de la lista de años
-        años_2 = len(record_2["años"])  # El tamaño de la lista de años
-        
-        if años_1 < años_2:
+        a1 = ar.size(r1["años"])
+        a2 = ar.size(r2["años"])
+        if a1 < a2:
             return True
-        elif años_1 > años_2:
+        elif a1 > a2:
             return False
         else:
-            # Si los años son iguales, comparamos lexicográficamente por el nombre del área
-            nombre_area_1 = record_1["nombre_area"]
-            nombre_area_2 = record_2["nombre_area"]
-            
-            if nombre_area_1 < nombre_area_2:
-                return True
-            else:
-                return False
-
+            return r1["nombre_area"] < r2["nombre_area"]
 
 
 def req_7(catalog):
