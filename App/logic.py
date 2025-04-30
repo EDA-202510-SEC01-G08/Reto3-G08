@@ -70,7 +70,7 @@ def load_data(catalog, filename):
             sc.put(map_una_fila, "Part 1-2", row["Part 1-2"])
             sc.put(map_una_fila, "Crm Cd", row["Crm Cd"])
             sc.put(map_una_fila, "Crm Cd Desc", row["Crm Cd Desc"])
-            sc.put(map_una_fila, "Vict Age", row["Vict Age"])
+            sc.put(map_una_fila, "Vict Age", int(row["Vict Age"]))
             sc.put(map_una_fila, "Vict Sex", row["Vict Sex"])
             sc.put(map_una_fila, "Status", row["Status"])
             sc.put(map_una_fila, "Status Desc", row["Status Desc"])
@@ -82,15 +82,15 @@ def load_data(catalog, filename):
                 rbt.put(rbt_fecha_rptd, dt.strptime(row["Date Rptd"], "%m/%d/%Y %H:%M:%S %p"), ar.new_list())
             if rbt.contains(rbt_area_name, row["AREA NAME"]) == False:
                 rbt.put(rbt_area_name, row["AREA NAME"], ar.new_list())
-            if rbt.contains(rbt_edad, row["Vict Age"]) == False:
-                rbt.put(rbt_edad, row["Vict Age"], ar.new_list())
+            if rbt.contains(rbt_edad, int(row["Vict Age"])) == False:
+                rbt.put(rbt_edad, int(row["Vict Age"]), ar.new_list())
             if bst.contains(bst_genero, row["Vict Sex"]) == False:
                 bst.put(bst_genero, row["Vict Sex"], ar.new_list())
 
             ar.add_last(rbt.get(rbt_fecha_occured, dt.strptime(row["DATE OCC"], "%m/%d/%Y %H:%M:%S %p")), map_una_fila)
             ar.add_last(rbt.get(rbt_fecha_rptd, dt.strptime(row["Date Rptd"], "%m/%d/%Y %H:%M:%S %p")), map_una_fila)
             ar.add_last(rbt.get(rbt_area_name, row["AREA NAME"]), map_una_fila)
-            ar.add_last(rbt.get(rbt_edad, row["Vict Age"]), map_una_fila)
+            ar.add_last(rbt.get(rbt_edad, int(row["Vict Age"])), map_una_fila)
             ar.add_last(rbt.get(bst_genero, row["Vict Sex"]), map_una_fila)
 
             datos_listas = [row["DR_NO"],
@@ -403,12 +403,103 @@ def req_6(catalog):
     pass
 
 
-def req_7(catalog):
+def req_7(catalog, N, victim_sex, age_start, age_end):
     """
-    Retorna el resultado del requerimiento 7
+    Determina los crímenes más comunes para las víctimas de un sexo en un rango de edad dado.
     """
-    # TODO: Modificar el requerimiento 7
-    pass
+    start_time = get_time()
+
+    # Obtener el árbol de edades y filtrar por rango de edad
+    rbt_edad = lp.get(catalog, "edad")
+    edades_rango = rbt.values(rbt_edad, age_start, age_end)
+    # edades_rango es un stack que contiene array de mapas, cada lista tiene los crimenes que tienen la edad en el rango
+
+    # Filtrar los crímenes por sexo de la víctima
+    crimes_filtered = ar.new_list()
+    for lista_crimenes in edades_rango["elements"]:
+        for crimen in lista_crimenes["elements"]:
+            if sc.get(crimen, "Vict Sex") == victim_sex:
+                ar.add_last(crimes_filtered, crimen)
+    # crimes_filtered es un array que tiene mapas que tienen la edad en el rango y el sexo de la víctima es igual al que se busca
+
+    # Crear un mapa para contar los crímenes por código
+    crime_count_map = lp.new_map(6, 0.5, 109345121)
+    for crime in crimes_filtered["elements"]:
+        crime_code = sc.get(crime, "Crm Cd")
+        crime_date = sc.get(crime, "DATE OCC")
+        victim_age = sc.get(crime, "Vict Age")
+
+        if not lp.contains(crime_count_map, crime_code):
+            crime_data = lp.new_map(6, 0.5, 109345121)
+            lp.put(crime_data, "crime_count", 0)
+            lp.put(crime_data, "age_count", rbt.new_map())
+            lp.put(crime_data, "year_count", rbt.new_map())
+            lp.put(crime_data, "crime_code", crime_code)
+            lp.put(crime_count_map, crime_code, crime_data)
+
+        crime_data = lp.get(crime_count_map, crime_code)
+        lp.put(crime_data, "crime_count", lp.get(crime_data, "crime_count") + 1)
+ 
+        # Contar crímenes por edad
+        age_map = lp.get(crime_data, "age_count")
+        if not rbt.contains(age_map, victim_age):
+            rbt.put(age_map, victim_age, (victim_age, 0))
+        rbt.put(age_map, victim_age, (victim_age, rbt.get(age_map, victim_age)[1] + 1))
+
+        # Contar crímenes por año
+        crime_year = crime_date.year #asumo que se usa el año de date OCC
+        year_map = lp.get(crime_data, "year_count")
+        if not rbt.contains(year_map, crime_year):
+            rbt.put(year_map, crime_year, (crime_year, 0))
+        rbt.put(year_map, crime_year, (crime_year, rbt.get(year_map, crime_year)[1] + 1))
+
+    # Convertir el mapa de crímenes a una lista para ordenar
+    crime_list = lp.value_set(crime_count_map)
+
+    # Ordenar los crímenes por cantidad, años y lexicográficamente por código
+    sorted_crimes = ar.merge_sort(crime_list, sort_criteria_7)
+
+    # Obtener los N crímenes más comunes
+    top_n_crimes = ar.sub_list(sorted_crimes, 0, N)
+
+    # Preparar la respuesta
+    
+
+    end_time = get_time()
+    elapsed_time = str(round(delta_time(start_time, end_time), 2)) + "ms"
+
+
+    return top_n_crimes, elapsed_time
+
+def sort_criteria_7(map_1, map_2):
+    """
+    Criterio de ordenamiento para los crímenes:
+    1. Menor a mayor por cantidad de crímenes.
+    2. Si hay empate, menor a mayor por cantidad de años en los que ocurrieron crímenes.
+    3. Si persiste el empate, ordenar lexicográficamente por el código del crimen.
+    """
+    # Obtener la cantidad de crímenes
+    count_1 = lp.get(map_1, "crime_count")
+    count_2 = lp.get(map_2, "crime_count")
+
+    if count_1 > count_2:
+        return True
+    elif count_1 < count_2:
+        return False
+    else:
+        # Si hay empate, comparar por cantidad de años
+        year_count_1 = rbt.size(lp.get(map_1, "year_count"))
+        year_count_2 = rbt.size(lp.get(map_2, "year_count"))
+
+        if year_count_1 > year_count_2:
+            return True
+        elif year_count_1 < year_count_2:
+            return False
+        else:
+            # Si persiste el empate, comparar lexicográficamente por el código del crimen
+            code_1 = lp.get(map_1, "crime_code")
+            code_2 = lp.get(map_2, "crime_code")
+            return code_1 < code_2
 
 
 def req_8(catalog):
