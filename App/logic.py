@@ -328,59 +328,58 @@ def req_4(catalog, N, edad_i, edad_f):
     # TODO: Modificar el requerimiento 4
     start_time = get_time()
 
+    N = int(N)
     edad_inicial = int(edad_i)
     edad_final = int(edad_f)
 
     rbt_edad = lp.get(catalog, "edad")
-
     if rbt_edad is None:
         return None
 
     lista_valores = rbt.values(rbt_edad, edad_inicial, edad_final)
-
     if ar.size(lista_valores) == 0:
         return None
 
     graves = ar.new_list()
     menores = ar.new_list()
 
-    for list in lista_valores["elements"]:
-        for hash in list["elements"]:
+    for lista in lista_valores["elements"]:
+        for hash in lista["elements"]:
             gravedad = sc.get(hash, "Part 1-2")
             if gravedad == "Part 1":
                 ar.add_last(graves, hash)
             elif gravedad == "Part 2":
                 ar.add_last(menores, hash)
 
-    if graves["size"] == 0 or menores["size"] == 0:
+    if ar.size(graves) == 0 and ar.size(menores) == 0:
         return None
-    
+
     graves_ordenados = ar.merge_sort(graves, sort_crit_4)
     menores_ordenados = ar.merge_sort(menores, sort_crit_4)
 
-    crimenes_ordenados = graves_ordenados["elements"] + menores_ordenados["elements"]
+    # Suponiendo que merge_sort retorna directamente la lista ordenada
+    crimenes_ordenados = graves_ordenados + menores_ordenados
 
     respuesta = ar.new_list()
-
     for crimen in crimenes_ordenados[:N]:
         info = {
             "ID Reporte": sc.get(crimen, "DR_NO"),
-            "Fecha Ocurrencia": sc.get(crimen, "DATE OCC"),
-            "Hora Ocurrencia": sc.get(crimen, "TIME OCC"),
+            "Fecha del Crimen": sc.get(crimen, "DATE OCC"),
+            "Hora del Crimen": sc.get(crimen, "TIME OCC"),
             "Área": sc.get(crimen, "AREA"),
             "Subárea": sc.get(crimen, "AREA NAME"),
             "Gravedad": sc.get(crimen, "Part 1-2"),
             "Código Crimen": sc.get(crimen, "Crm Cd"),
             "Edad Víctima": sc.get(crimen, "Vict Age"),
-            "Estado Caso": sc.get(crimen, "Status"),
+            "Estado del Caso": sc.get(crimen, "Status"),
             "Dirección": sc.get(crimen, "LOCATION")
         }
         ar.add_last(respuesta, info)
 
     end_time = get_time()
     tiempo_carga = delta_time(start_time, end_time)
+    total_crimenes = len(crimenes_ordenados)
 
-    total_crimenes = ar.size(crimenes_ordenados)
     return tiempo_carga, total_crimenes, respuesta
 
 def sort_crit_4(record_1, record_2):

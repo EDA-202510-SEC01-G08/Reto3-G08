@@ -116,46 +116,43 @@ def print_req_4(control):
     """
         Función que imprime la solución del Requerimiento 4 en consola
     """
-    # TODO: Imprimir el resultado del requerimiento 4
-    N = input("Ingrese el número de registros a mostrar: ")
+    N = int(input("Ingrese el número de registros a mostrar: "))
     edad_i = input("Ingrese la edad inicial: ")
     edad_f = input("Ingrese la edad final: ")
 
     if int(edad_i) > int(edad_f):
         print("\nLa edad inicial no puede ser mayor que la edad final.")
-    else:
-        # La función req_4 retorna el tiempo de carga, el número total de crímenes y los resultados
-        resultado = lg.req_4(control, N, edad_i, edad_f)
-
-        tiempo_carga, total_crimenes, result = resultado
-
-
-        if resultado is None or ar.size(resultado[1]) == 0:
-            print(f"\nNo se encontraron registros para el rango de edades {edad_i} - {edad_f}.")
-        else:
-            # Número total de crímenes que cumplen el criterio
-            headers_generales = ["Tiempo de carga (s)", "Número total de crímenes"]
-            print(tb.tabulate([[tiempo_carga, total_crimenes]], headers_generales, tablefmt="pretty"))
+        return
+    
+    resultado = lg.req_4(control, N, edad_i, edad_f)
+    
+    if resultado is None:
+        print(f"\nNo se encontraron registros para el rango de edades {edad_i} - {edad_f}.")
+        return
+    
 
             # Información detallada de los crímenes
-            headers = [
-                "ID Reporte", "Fecha del Crimen", "Hora del Crimen", "Área", 
+    headers = ["ID Reporte", "Fecha del Crimen", "Hora del Crimen", "Área", 
                 "Subárea", "Gravedad", "Código Crimen", "Edad Víctima", 
-                "Estado del Caso", "Dirección"
-            ]
+                "Estado del Caso", "Dirección"]
+    info = []
 
-            if ar.size(result[1]["elements"]) <= int(N):
-                print(f"\nLos registros encontrados para el rango de edades {edad_i} - {edad_f} son:\n")
-                print(tb.tabulate(result[1]["elements"], headers, tablefmt="pretty"))
-            else:
-                primeros_5 = ar.sub_list(result[1]["elements"], 0, 5)
-                ultimos_5 = ar.sub_list(result[1]["elements"], ar.size(result["elements"]) - 5, 5)
-                print(f"\nLos primeros 5 registros para el rango de edades {edad_i} - {edad_f} son:\n")
-                print(tb.tabulate(primeros_5["elements"], headers, tablefmt="pretty"))
-                print(f"\nLos últimos 5 registros para el rango de edades {edad_i} - {edad_f} son:\n")
-                print(tb.tabulate(ultimos_5["elements"], headers, tablefmt="pretty"))
-
-
+            # Mostrar todos los registros encontrados
+    for mapa in resultado["elements"]:
+        info.append([
+                    lp.get(mapa, "id_reporte"),
+                    lp.get(mapa, "fecha_crimen"),
+                    lp.get(mapa, "hora_crimen"),
+                    lp.get(mapa, "area"),
+                    lp.get(mapa, "subarea"),
+                    lp.get(mapa, "gravedad"),
+                    lp.get(mapa, "codigo_crimen"),
+                    lp.get(mapa, "edad_victima"),
+                    lp.get(mapa, "estado_caso"),
+                    lp.get(mapa, "direccion")
+                ])
+    print(f"\nLos registros encontrados para el rango de edades {edad_i} - {edad_f} son:\n")
+    print(tb.tabulate(info, headers, tablefmt="pretty"))
 
 def print_req_5(control):
     
