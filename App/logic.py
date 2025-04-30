@@ -326,7 +326,77 @@ def req_4(catalog, N, edad_i, edad_f):
     Retorna el resultado del requerimiento 4
     """
     # TODO: Modificar el requerimiento 4
-    pass
+    start_time = get_time()
+
+    edad_inicial = int(edad_i)
+    edad_final = int(edad_f)
+
+    edades = lp.get(catalog, "edad")
+
+    lista_valores = rbt.values(edades, edad_inicial, edad_final)
+
+    graves = ar.new_list()
+    menores = ar.new_list()
+
+    for list in lista_valores["elements"]:
+        for hash in list["elements"]:
+            gravedad = sc.get(hash, "Part 1-2")
+            if gravedad == "Part 1":
+                ar.add_last(graves, hash)
+            elif gravedad == "Part 2":
+                ar.add_last(menores, hash)
+
+    if graves["size"] == 0 or menores["size"] == 0:
+        return None
+    
+    graves_ordenados = ar.merge_sort(graves, sort_crit_4)
+    menores_ordenados = ar.merge_sort(menores, sort_crit_4)
+
+    crimenes_ordenados = graves_ordenados["elements"] + menores_ordenados["elements"]
+
+    respuesta = ar.new_list()
+
+    for crimen in crimenes_ordenados[:N]:
+        info = {
+            "ID Reporte": sc.get(crimen, "DR_NO"),
+            "Fecha Ocurrencia": sc.get(crimen, "DATE OCC"),
+            "Hora Ocurrencia": sc.get(crimen, "TIME OCC"),
+            "Área": sc.get(crimen, "AREA"),
+            "Subárea": sc.get(crimen, "AREA NAME"),
+            "Gravedad": sc.get(crimen, "Part 1-2"),
+            "Código Crimen": sc.get(crimen, "Crm Cd"),
+            "Edad Víctima": sc.get(crimen, "Vict Age"),
+            "Estado Caso": sc.get(crimen, "Status"),
+            "Dirección": sc.get(crimen, "LOCATION")
+        }
+        ar.add_last(respuesta, info)
+
+    end_time = get_time()
+    tiempo_carga = delta_time(start_time, end_time)
+
+    total_crimenes = ar.size(crimenes_ordenados)
+    return tiempo_carga, total_crimenes, respuesta
+
+def sort_crit_4(record_1, record_2):
+    edad_1 = int(sc.get(record_1, "Vict Age"))
+    edad_2 = int(sc.get(record_2, "Vict Age"))
+
+    if edad_1 > edad_2:
+        return True
+    elif edad_1 < edad_2:
+        return False
+    else:
+        fecha_a = sc.get(record_1, "DATE OCC")
+        fecha_b = sc.get(record_2, "DATE OCC")
+        
+        # Convertir las fechas para comparar correctamente
+        fecha_1 = dt.strptime(fecha_a, "%m/%d/%Y")
+        fecha_2 = dt.strptime(fecha_b, "%m/%d/%Y")
+
+        if fecha_1 < fecha_2:
+            return True
+        else:
+            return False
 
 
 def req_5(catalog):
