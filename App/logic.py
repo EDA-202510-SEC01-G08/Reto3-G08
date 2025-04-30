@@ -321,28 +321,31 @@ def sort_crit_3(record_1, record_2):
     else:
         return False
 
-def req_4(catalog, N, edad_i, edad_f):
+def req_4(catalog, n, edad_i, edad_f):
     """
     Retorna el resultado del requerimiento 4
     """
     # TODO: Modificar el requerimiento 4
     start_time = get_time()
 
-    N = int(N)
+    # Convertir las edades de los parámetros a enteros
+    n = int(n)
     edad_inicial = int(edad_i)
     edad_final = int(edad_f)
 
+    # Obtener el árbol rojo-negro de edades
     rbt_edad = lp.get(catalog, "edad")
-    if rbt_edad is None:
-        return None
+    
 
+    # Obtener los valores en el rango de edades
     lista_valores = rbt.values(rbt_edad, edad_inicial, edad_final)
-    if ar.size(lista_valores) == 0:
-        return None
+    
 
+    # Crear listas para almacenar los crímenes graves y menores
     graves = ar.new_list()
     menores = ar.new_list()
 
+    # Filtrar los crímenes según su gravedad
     for lista in lista_valores["elements"]:
         for hash in lista["elements"]:
             gravedad = sc.get(hash, "Part 1-2")
@@ -351,17 +354,17 @@ def req_4(catalog, N, edad_i, edad_f):
             elif gravedad == "Part 2":
                 ar.add_last(menores, hash)
 
-    if ar.size(graves) == 0 and ar.size(menores) == 0:
-        return None
-
+    print(graves_ordenados,menores_ordenados)
+    # Ordenar las listas de crímenes por el criterio dado
     graves_ordenados = ar.merge_sort(graves, sort_crit_4)
     menores_ordenados = ar.merge_sort(menores, sort_crit_4)
 
-    # Suponiendo que merge_sort retorna directamente la lista ordenada
+    # Combinar las listas ordenadas
     crimenes_ordenados = graves_ordenados + menores_ordenados
 
+    # Crear la respuesta con los primeros N crímenes
     respuesta = ar.new_list()
-    for crimen in crimenes_ordenados[:N]:
+    for crimen in crimenes_ordenados[:n]:
         info = {
             "ID Reporte": sc.get(crimen, "DR_NO"),
             "Fecha del Crimen": sc.get(crimen, "DATE OCC"),
@@ -376,10 +379,12 @@ def req_4(catalog, N, edad_i, edad_f):
         }
         ar.add_last(respuesta, info)
 
+    # Calcular el tiempo de ejecución
     end_time = get_time()
     tiempo_carga = delta_time(start_time, end_time)
-    total_crimenes = len(crimenes_ordenados)
+    total_crimenes = ar.size(crimenes_ordenados)
 
+    # Retornar el tiempo de carga, total de crímenes y los primeros N crímenes
     return tiempo_carga, total_crimenes, respuesta
 
 def sort_crit_4(record_1, record_2):

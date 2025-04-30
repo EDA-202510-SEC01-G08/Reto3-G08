@@ -116,7 +116,7 @@ def print_req_4(control):
     """
         Función que imprime la solución del Requerimiento 4 en consola
     """
-    N = int(input("Ingrese el número de registros a mostrar: "))
+    n = int(input("Ingrese el número de registros a mostrar: "))
     edad_i = input("Ingrese la edad inicial: ")
     edad_f = input("Ingrese la edad final: ")
 
@@ -124,22 +124,23 @@ def print_req_4(control):
         print("\nLa edad inicial no puede ser mayor que la edad final.")
         return
     
-    resultado = lg.req_4(control, N, edad_i, edad_f)
-    
+    resultado = lg.req_4(control, n, edad_i, edad_f)
+    print(f"Resultado de req_4: {resultado}")
+
     if resultado is None:
         print(f"\nNo se encontraron registros para el rango de edades {edad_i} - {edad_f}.")
         return
     
-
+    else:
             # Información detallada de los crímenes
-    headers = ["ID Reporte", "Fecha del Crimen", "Hora del Crimen", "Área", 
+        headers = ["ID Reporte", "Fecha del Crimen", "Hora del Crimen", "Área", 
                 "Subárea", "Gravedad", "Código Crimen", "Edad Víctima", 
                 "Estado del Caso", "Dirección"]
-    info = []
+        info = []
 
             # Mostrar todos los registros encontrados
-    for mapa in resultado["elements"]:
-        info.append([
+        for mapa in resultado["elements"]:
+            info.append([
                     lp.get(mapa, "id_reporte"),
                     lp.get(mapa, "fecha_crimen"),
                     lp.get(mapa, "hora_crimen"),
@@ -151,8 +152,8 @@ def print_req_4(control):
                     lp.get(mapa, "estado_caso"),
                     lp.get(mapa, "direccion")
                 ])
-    print(f"\nLos registros encontrados para el rango de edades {edad_i} - {edad_f} son:\n")
-    print(tb.tabulate(info, headers, tablefmt="pretty"))
+        print(f"\nLos registros encontrados para el rango de edades {edad_i} - {edad_f} son:\n")
+        print(tb.tabulate(info, headers, tablefmt="pretty"))
 
 def print_req_5(control):
     
