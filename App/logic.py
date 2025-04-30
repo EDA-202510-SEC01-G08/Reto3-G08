@@ -331,9 +331,15 @@ def req_4(catalog, N, edad_i, edad_f):
     edad_inicial = int(edad_i)
     edad_final = int(edad_f)
 
-    edades = lp.get(catalog, "edad")
+    rbt_edad = lp.get(catalog, "edad")
 
-    lista_valores = rbt.values(edades, edad_inicial, edad_final)
+    if rbt_edad is None:
+        return None
+
+    lista_valores = rbt.values(rbt_edad, edad_inicial, edad_final)
+
+    if ar.size(lista_valores) == 0:
+        return None
 
     graves = ar.new_list()
     menores = ar.new_list()

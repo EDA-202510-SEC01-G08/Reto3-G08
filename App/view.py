@@ -125,9 +125,12 @@ def print_req_4(control):
         print("\nLa edad inicial no puede ser mayor que la edad final.")
     else:
         # La función req_4 retorna el tiempo de carga, el número total de crímenes y los resultados
-        tiempo_carga, total_crimenes, result = lg.req_4(control, N, edad_i, edad_f)
+        resultado = lg.req_4(control, N, edad_i, edad_f)
 
-        if result is None or ar.size(result[1]["elements"]) == 0:
+        tiempo_carga, total_crimenes, result = resultado
+
+
+        if resultado is None or ar.size(resultado[1]) == 0:
             print(f"\nNo se encontraron registros para el rango de edades {edad_i} - {edad_f}.")
         else:
             # Número total de crímenes que cumplen el criterio
@@ -146,7 +149,7 @@ def print_req_4(control):
                 print(tb.tabulate(result[1]["elements"], headers, tablefmt="pretty"))
             else:
                 primeros_5 = ar.sub_list(result[1]["elements"], 0, 5)
-                ultimos_5 = ar.sub_list(result[1]["elements"], ar.size(result[1]["elements"]) - 5, 5)
+                ultimos_5 = ar.sub_list(result[1]["elements"], ar.size(result["elements"]) - 5, 5)
                 print(f"\nLos primeros 5 registros para el rango de edades {edad_i} - {edad_f} son:\n")
                 print(tb.tabulate(primeros_5["elements"], headers, tablefmt="pretty"))
                 print(f"\nLos últimos 5 registros para el rango de edades {edad_i} - {edad_f} son:\n")
