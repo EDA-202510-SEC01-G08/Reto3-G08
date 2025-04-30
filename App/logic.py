@@ -90,7 +90,7 @@ def load_data(catalog, filename):
             ar.add_last(rbt.get(rbt_fecha_occured, dt.strptime(row["DATE OCC"], "%m/%d/%Y %H:%M:%S %p")), map_una_fila)
             ar.add_last(rbt.get(rbt_fecha_rptd, dt.strptime(row["Date Rptd"], "%m/%d/%Y %H:%M:%S %p")), map_una_fila)
             ar.add_last(rbt.get(rbt_area_name, row["AREA NAME"]), map_una_fila)
-            ar.add_last(rbt.get(rbt_edad, row["Vict Age"]), map_una_fila)
+            ar.add_last(rbt.get(rbt_edad, int(row["Vict Age"])), map_una_fila)
             ar.add_last(rbt.get(bst_genero, row["Vict Sex"]), map_una_fila)
 
             datos_listas = [row["DR_NO"],
@@ -399,12 +399,74 @@ def sort_crit_4(record_1, record_2):
             return False
 
 
-def req_5(catalog):
-    """
-    Retorna el resultado del requerimiento 5
-    """
-    # TODO: Modificar el requerimiento 5
-    pass
+def req_5(catalog, n, start_date, end_date):
+    
+    start_time = get_time()
+    start_date = dt.strptime(start_date, "%Y-%m-%d")
+    end_date = dt.strptime(end_date, "%Y-%m-%d")
+
+    rbt_fecha_occ = lp.get(catalog, "fecha_occ")
+    
+    crimes_in_range = rbt.values(rbt_fecha_occ, start_date, end_date)
+    # Array que contiene arrays de mapas, cada mapa es una fila de datos
+    # Se crea una lista para almacenar los crímenes no resueltos
+
+    crimes_ic = ar.new_list() 
+    for array in crimes_in_range["elements"]:
+        for mapa in array["elements"]:
+            if sc.get(mapa, "Status") == "IC":
+                ar.add_last(crimes_ic, mapa)
+
+    #crimes_ic es un array que tiene mapas, cada mapa es una fila que está en el rango y que tiene como status IC
+
+    area_crime_count = rbt.new_map()
+    # Creo un arbol que tiene como llave el area y voy sumando la cantidad de crimenes que hay en cada area
+    for mapa in crimes_ic["elements"]:
+        area = int(sc.get(mapa, "AREA"))
+        area_name = sc.get(mapa, "AREA NAME")
+        if rbt.contains(area_crime_count, area) == False:
+            rbt.put(area_crime_count, area, lp.new_map(5, 0.5, 109345121))
+            lp.put(rbt.get(area_crime_count, area), "area_name", area_name)
+            lp.put(rbt.get(area_crime_count, area), "crime_count", 0)
+            lp.put(rbt.get(area_crime_count, area), "first_crime_date", None)
+            lp.put(rbt.get(area_crime_count, area), "last_crime_date", None)
+            lp.put(rbt.get(area_crime_count, area), "area", area)
+        lp.put(rbt.get(area_crime_count, area), "crime_count", lp.get(rbt.get(area_crime_count, area), "crime_count") + 1)
+        crime_date = sc.get(mapa, "DATE OCC")
+        if lp.get(rbt.get(area_crime_count, area), "first_crime_date") is None or crime_date < lp.get(rbt.get(area_crime_count, area), "first_crime_date"):
+            lp.put(rbt.get(area_crime_count, area), "first_crime_date", crime_date)
+        if lp.get(rbt.get(area_crime_count, area), "last_crime_date") is None or crime_date > lp.get(rbt.get(area_crime_count, area), "last_crime_date"):
+            lp.put(rbt.get(area_crime_count, area), "last_crime_date", crime_date)
+
+    # Ahora la idea es sacar el values del arbol que me va a dar un stack con los mapas y 
+    # ordenar el stack por la cantidad de crimenes que hay en cada area con merge_sort
+
+    mapas_area = rbt.value_set(area_crime_count)
+    # lista que contiene los mapas de cada area
+
+    # Sort the areas using merge_sort and the custom sort criteria
+    sorted_areas = ar.merge_sort(mapas_area, area_sort_criteria_5)
+
+    # Get the top N areas
+    top_n_areas_maps = ar.sub_list(sorted_areas, 0, n)
+
+    end_time = get_time()
+    elapsed_time = str(round(delta_time(start_time, end_time), 2)) + "ms"
+    print(elapsed_time)
+    return top_n_areas_maps
+
+
+def area_sort_criteria_5(mapa_1, mapa_2):
+
+    if lp.get(mapa_1, "crime_count") > lp.get(mapa_2, "crime_count"):
+        return True
+    elif lp.get(mapa_1, "crime_count") == lp.get(mapa_2, "crime_count"):
+        if lp.get(mapa_1, "area_name") > lp.get(mapa_2, "area_name"):
+            return True
+        else:
+            return False
+    else:
+        return False
 
 
 def req_6(catalog,N,genero, mes):
