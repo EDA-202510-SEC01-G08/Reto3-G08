@@ -106,7 +106,7 @@ def print_req_3(control):
     else:
         print(result[1])
         print(result[2])
-        headers = ["Identificador del crimen", "Fecha", "Hora", "Area", "Subarea", "Gravedad", "Codigo del crimen", "Estado del caso", "Dirección"]
+        headers = ["Identificador del crimen", "Fecha", "Hora", "Area", "Subarea", "Gravedad", "Codigo del crimen", "Estado del caso", "Dirección", "Fecha de reporte", "Nombre del Area"]
         data = result[0]["elements"]
         print(f"\nLos {n} crimenes mas recientemente reportados en {area_name} son:\n")
         print(tb.tabulate(data, headers, tablefmt="pretty"))
