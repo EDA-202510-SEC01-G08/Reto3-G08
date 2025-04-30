@@ -2,6 +2,7 @@ import sys
 from App import logic as lg
 from DataStructures.List import array_list as ar
 from DataStructures.Map import map_linear_probing as lp
+from DataStructures.Tree import red_black_tree as rbt
 import tabulate as tb
 import csv  
 
@@ -147,12 +148,34 @@ def print_req_6(control):
     pass
 
 
-def print_req_7(control):
-    """
-        Función que imprime la solución del Requerimiento 7 en consola
-    """
-    # TODO: Imprimir el resultado del requerimiento 7
-    pass
+
+def print_req_7(control): 
+    N = int(input("Ingrese el número de datos que deseas analizar: "))
+    victim_sex_input = input("Ingrese el sexo de la víctima (M/F): ")
+    victim_sex = victim_sex_input.upper().replace(" ", "")
+    age_start = int(input("Ingrese la edad mínima de la víctima: "))
+    age_end = int(input("Ingrese la edad máxima de la víctima: "))
+
+    result = lg.req_7(control, N, victim_sex, age_start, age_end)
+    lista_de_mapas = result[0]
+    tiempo = result[1]
+
+    headers = ["Código del crimen", "Nº de crímenes", "Nº de crímenes ocurridos por edad (crímenes, edad)", "Nº de crímenes ocurridos por año (crímenes, año)"]
+    info = []
+    for mapa in lista_de_mapas["elements"]:
+        crime_code = int(lp.get(mapa, "crime_code"))
+        crime_count = int(lp.get(mapa, "crime_count"))
+        edades = rbt.value_set(lp.get(mapa, "age_count"))
+        years = rbt.value_set(lp.get(mapa, "year_count"))
+
+        info.append([crime_code, crime_count, edades["elements"], years["elements"]])
+
+    print(f"\nLos {N} crimenes con mayor cantidad de víctimas entre {age_start} y {age_end} años son:\n")
+    print(tb.tabulate(info, headers, tablefmt="pretty"))
+    print(f"\nEl tiempo de ejecución del requerimiento 7 es: {tiempo} segundos\n")
+
+    
+
 
 
 def print_req_8(control):
