@@ -70,7 +70,7 @@ def load_data(catalog, filename):
             sc.put(map_una_fila, "Part 1-2", row["Part 1-2"])
             sc.put(map_una_fila, "Crm Cd", row["Crm Cd"])
             sc.put(map_una_fila, "Crm Cd Desc", row["Crm Cd Desc"])
-            sc.put(map_una_fila, "Vict Age", row["Vict Age"])
+            sc.put(map_una_fila, "Vict Age", int(row["Vict Age"]))
             sc.put(map_una_fila, "Vict Sex", row["Vict Sex"])
             sc.put(map_una_fila, "Status", row["Status"])
             sc.put(map_una_fila, "Status Desc", row["Status Desc"])
@@ -82,15 +82,15 @@ def load_data(catalog, filename):
                 rbt.put(rbt_fecha_rptd, dt.strptime(row["Date Rptd"], "%m/%d/%Y %H:%M:%S %p"), ar.new_list())
             if rbt.contains(rbt_area_name, row["AREA NAME"]) == False:
                 rbt.put(rbt_area_name, row["AREA NAME"], ar.new_list())
-            if rbt.contains(rbt_edad, row["Vict Age"]) == False:
-                rbt.put(rbt_edad, row["Vict Age"], ar.new_list())
+            if rbt.contains(rbt_edad, int(row["Vict Age"])) == False:
+                rbt.put(rbt_edad, int(row["Vict Age"]), ar.new_list())
             if bst.contains(bst_genero, row["Vict Sex"]) == False:
                 bst.put(bst_genero, row["Vict Sex"], ar.new_list())
 
             ar.add_last(rbt.get(rbt_fecha_occured, dt.strptime(row["DATE OCC"], "%m/%d/%Y %H:%M:%S %p")), map_una_fila)
             ar.add_last(rbt.get(rbt_fecha_rptd, dt.strptime(row["Date Rptd"], "%m/%d/%Y %H:%M:%S %p")), map_una_fila)
             ar.add_last(rbt.get(rbt_area_name, row["AREA NAME"]), map_una_fila)
-            ar.add_last(rbt.get(rbt_edad, row["Vict Age"]), map_una_fila)
+            ar.add_last(rbt.get(rbt_edad,int(row["Vict Age"])), map_una_fila)
             ar.add_last(rbt.get(bst_genero, row["Vict Sex"]), map_una_fila)
 
             datos_listas = [row["DR_NO"],
@@ -232,7 +232,7 @@ def req_5(catalog):
     pass
 
 
-def req_6(catalog,N,sexo, mes):
+def req_6(catalog,N,genero, mes):
     """
     Retorna el resultado del requerimiento 6
     """
@@ -244,7 +244,7 @@ def req_6(catalog,N,sexo, mes):
     crímenes_por_area = ar.new_list()
     
     # Obtener el árbol de crímenes filtrados por sexo
-    crimenes_sexo = rbt.values(catalog, sexo)
+    crimenes_sexo = bst.values(catalog, genero, genero)
     
     # Recorrer los crímenes filtrados por sexo
     for lista in crimenes_sexo["elements"]:
@@ -265,7 +265,7 @@ def req_6(catalog,N,sexo, mes):
                         # Si el área ya existe, actualizamos la cantidad de crímenes y los años
                         area_info["crímenes"] += 1
                         if año_crimen not in area_info["años"]:
-                            area_info["años"].append(año_crimen)
+                            ar.add_last(area_info["años"],(año_crimen))
                         area_encontrada = True
                         
                 # Si el área no fue encontrada, la agregamos a la lista
